@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Riverside Photos &amp; Podcast</title>
+    <link>https://photos.example.net/</link>
+    <description>Photo stories and the weekly podcast</description>
+    <itunes:image href="https://photos.example.net/podcast-cover.jpg"/>
+    <item>
+      <title>Baptism Sunday</title>
+      <link>https://photos.example.net/albums/baptism-sunday</link>
+      <guid>tag:photos.example.net,2025:album-881</guid>
+      <pubDate>Sun, 28 Dec 2025 17:45:00 -0600</pubDate>
+      <description>Twelve people were baptized this Sunday.</description>
+      <media:content url="https://cdn.photos.example.net/881/video.mp4" type="video/mp4" medium="video">
+        <media:thumbnail url="https://cdn.photos.example.net/881/video-thumb.jpg"/>
+      </media:content>
+      <media:content url="https://cdn.photos.example.net/881/cover.jpg" type="image/jpeg" medium="image" width="1920" height="1080"/>
+    </item>
+    <item>
+      <title>Food drive results</title>
+      <link>https://photos.example.net/albums/food-drive</link>
+      <guid>tag:photos.example.net,2025:album-880</guid>
+      <pubDate>Mon, 22 Dec 2025 12:00:00 GMT</pubDate>
+      <description>We collected 2,400 pounds of food for the county pantry.</description>
+      <media:group>
+        <media:content url="https://cdn.photos.example.net/880/food.webp" medium="image"/>
+        <media:content url="https://cdn.photos.example.net/880/food-small.webp" medium="image"/>
+      </media:group>
+    </item>
+    <item>
+      <title>Episode 112: Hope in the waiting</title>
+      <link>https://photos.example.net/podcast/112</link>
+      <guid isPermaLink="false">podcast-112</guid>
+      <pubDate>Fri, 19 Dec 2025 06:00:00 +0000</pubDate>
+      <description>Pastor Ana talks about Advent and patience.</description>
+      <enclosure url="https://cdn.photos.example.net/podcast/112.mp3" length="48211002" type="audio/mpeg"/>
+      <itunes:image href="https://cdn.photos.example.net/podcast/112.jpg"/>
+    </item>
+    <item>
+      <title>Volunteer appreciation night</title>
+      <link>https://photos.example.net/albums/volunteers</link>
+      <guid>tag:photos.example.net,2025:album-879</guid>
+      <pubDate>Tue, 16 Dec 2025 19:00:00 -0600</pubDate>
+      <enclosure url="https://cdn.photos.example.net/879/volunteers.png" length="1048576" type="image/png"/>
+    </item>
+    <item>
+      <title>Weekly announcements</title>
+      <link>https://photos.example.net/announcements</link>
+      <pubDate>Mon, 15 Dec 2025 08:00:00 +0000</pubDate>
+      <description>No image on this one.</description>
+    </item>
+    <item>
+      <link>https://photos.example.net/albums/sunset</link>
+      <media:thumbnail url="thumbs/sunset.jpg"/>
+    </item>
+  </channel>
+</rss>
