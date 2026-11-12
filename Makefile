@@ -1,8 +1,9 @@
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -s -w -X main.version=$(VERSION)
 PLATFORMS := linux/arm64 linux/arm linux/amd64
+BINARIES := doxacast-agent doxacast-server doxacast-connector
 
-.PHONY: build test lint run-server
+.PHONY: build test lint run-server connector-check
 
 build:
 	@mkdir -p dist
@@ -10,10 +11,10 @@ build:
 		os=$${p%/*}; arch=$${p#*/}; suffix=$$os-$$arch; \
 		[ "$$arch" = arm ] && suffix=$$os-armv7; \
 		echo "building $$suffix"; \
-		GOOS=$$os GOARCH=$$arch GOARM=7 CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" \
-			-o dist/doxacast-agent-$$suffix ./cmd/doxacast-agent || exit 1; \
-		GOOS=$$os GOARCH=$$arch GOARM=7 CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" \
-			-o dist/doxacast-server-$$suffix ./cmd/doxacast-server || exit 1; \
+		for b in $(BINARIES); do \
+			GOOS=$$os GOARCH=$$arch GOARM=7 CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" \
+				-o dist/$$b-$$suffix ./cmd/$$b || exit 1; \
+		done; \
 	done
 
 test:
@@ -22,6 +23,14 @@ test:
 lint:
 	@test -z "$$(gofmt -l .)" || (gofmt -l . && exit 1)
 	go vet ./...
+
+# Run exactly what CI runs for one connector: make connector-check NAME=rss
+connector-check:
+	@test -n "$(NAME)" || (echo "usage: make connector-check NAME=<connector>" && exit 2)
+	@test -z "$$(gofmt -l connectors/$(NAME))" || (gofmt -l connectors/$(NAME) && exit 1)
+	go vet ./connectors/$(NAME)/...
+	go run ./cmd/doxacast-connector lint connectors/$(NAME)
+	go test -race -count=1 ./connectors/$(NAME)/...
 
 # Local dev server with throwaway tokens.
 run-server:

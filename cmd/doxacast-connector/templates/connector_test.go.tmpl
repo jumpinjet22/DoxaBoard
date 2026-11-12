@@ -1,0 +1,28 @@
+package {{.Package}}
+
+import (
+	"os"
+	"testing"
+
+	"github.com/jumpinjet22/doxacast/connectors/connectortest"
+	"github.com/jumpinjet22/doxacast/connectors/registry"
+)
+
+// TestConformance runs the DoxaCast conformance kit against recorded
+// responses in testdata/. No network, no real credentials.
+func TestConformance(t *testing.T) {
+	items, err := os.ReadFile("testdata/items.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	connectortest.Run(t, Connector{}, []connectortest.Fixture{
+		{
+			Name:   "basic",
+			Config: registry.Config{"base_url": "{{"{{"}}server{{"}}"}}", "api_key": "test-key"},
+			Routes: map[string]connectortest.Response{
+				"/api/items": {ContentType: "application/json", Body: items},
+			},
+			WantIDs: []string{"{{.Name}}:1", "{{.Name}}:2"}, // TODO: match your fixture
+		},
+	})
+}

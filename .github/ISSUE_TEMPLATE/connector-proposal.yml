@@ -1,0 +1,60 @@
+name: Connector proposal
+description: Propose a new in-tree connector for a CMS or content system.
+title: "Connector: "
+labels: [connector, proposal]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Before writing code, check whether the system already has an
+        **RSS/Atom feed**: if so, the built-in RSS connector may already work.
+        See [docs/connectors.md](https://github.com/jumpinjet22/DoxaCast/blob/main/docs/connectors.md).
+  - type: input
+    id: system
+    attributes:
+      label: System
+      description: Name and website of the CMS or content system.
+      placeholder: Planning Center (https://www.planningcenter.com)
+    validations:
+      required: true
+  - type: input
+    id: api_docs
+    attributes:
+      label: API documentation
+      placeholder: https://developer.example.com/api
+    validations:
+      required: true
+  - type: dropdown
+    id: auth
+    attributes:
+      label: Authentication
+      options:
+        - API key / token
+        - OAuth
+        - Username and password
+        - None (public)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: content
+    attributes:
+      label: What content should become slides?
+      description: Announcements, events, media... and how start/expire dates and images map.
+    validations:
+      required: true
+  - type: input
+    id: maintainer
+    attributes:
+      label: Who will maintain it?
+      description: Your GitHub handle, if you're volunteering. Connectors need a maintainer.
+      placeholder: "@your-handle"
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: The system has no usable RSS/Atom feed (or it's missing something important).
+          required: true
+        - label: I won't commit real member data or credentials (fixtures will be scrubbed).
+          required: true

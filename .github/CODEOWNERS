@@ -1,0 +1,11 @@
+# Default: the core maintainer reviews everything.
+*                    @jumpinjet22
+
+# Connectors run next to every source's API keys: always core review.
+/connectors/         @jumpinjet22
+# Per-connector maintainers are added below as connectors land, e.g.
+# /connectors/planningcenter/  @jumpinjet22 @their-handle
+
+# CI and security-sensitive config.
+/.github/            @jumpinjet22
+/deploy/             @jumpinjet22

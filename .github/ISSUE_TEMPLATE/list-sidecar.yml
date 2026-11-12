@@ -1,0 +1,60 @@
+name: List my connector
+description: List a sidecar connector you run and maintain (any language).
+title: "List connector: "
+labels: [connector, listing]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting, run:
+
+        ```
+        doxacast-connector check-feed <your sample feed URL>
+        ```
+
+        Listing means your sample feed passes `check-feed`. DoxaCast never runs
+        your code, so this isn't a security review: users run your connector
+        at their own discretion.
+  - type: input
+    id: name
+    attributes:
+      label: Connector name
+      placeholder: Example CMS
+    validations:
+      required: true
+  - type: input
+    id: repo
+    attributes:
+      label: Repository URL
+      description: Public, with a README and an open source LICENSE.
+      placeholder: https://github.com/you/doxacast-example-cms
+    validations:
+      required: true
+  - type: input
+    id: sample_feed
+    attributes:
+      label: Public sample feed URL
+      description: Serves sample (not real member) data. Rechecked nightly.
+      placeholder: https://you.github.io/doxacast-example-cms/sample.json
+    validations:
+      required: true
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      placeholder: Python
+  - type: textarea
+    id: description
+    attributes:
+      label: One-sentence description
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: "`doxacast-connector check-feed` passes on my sample feed."
+          required: true
+        - label: I maintain this connector and will respond to issues.
+          required: true

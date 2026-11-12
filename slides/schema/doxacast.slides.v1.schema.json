@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jumpinjet22/DoxaCast/blob/main/slides/schema/doxacast.slides.v1.schema.json",
+  "title": "DoxaCast slide feed v1",
+  "description": "Content for DoxaCast screens. Readers ignore unknown fields. Some rules (unique ids, expires_at after starts_at, plain-text body) can't be expressed here; run `doxacast-connector check-feed` for the full check.",
+  "type": "object",
+  "required": ["schema", "slides"],
+  "properties": {
+    "schema": { "const": "doxacast.slides/v1" },
+    "slides": {
+      "type": "array",
+      "maxItems": 500,
+      "items": { "$ref": "#/$defs/slide" }
+    }
+  },
+  "$defs": {
+    "slide": {
+      "type": "object",
+      "required": ["id"],
+      "anyOf": [
+        { "required": ["title"], "properties": { "title": { "minLength": 1 } } },
+        { "required": ["image"] }
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Stable across fetches for the same content. Unique within the feed."
+        },
+        "title": { "type": "string", "maxLength": 200 },
+        "body": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Plain text only. HTML is shown literally."
+        },
+        "image": {
+          "type": "object",
+          "required": ["url"],
+          "properties": {
+            "url": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Absolute http(s) URL, or relative to the feed URL."
+            },
+            "alt": { "type": "string", "maxLength": 300 }
+          }
+        },
+        "starts_at": { "type": "string", "format": "date-time" },
+        "expires_at": { "type": "string", "format": "date-time" },
+        "order": { "type": "integer", "description": "Ascending. Ties keep feed order." },
+        "duration_seconds": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 300,
+          "description": "Overrides the profile's per-slide time. Values outside the range are clamped."
+        },
+        "tags": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "type": "string", "minLength": 1, "maxLength": 50, "pattern": "^\\S+$" }
+        },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}
