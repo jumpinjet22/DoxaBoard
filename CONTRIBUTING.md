@@ -21,6 +21,11 @@ golangci-lint run   # the same linters CI runs (config in .golangci.yml)
 CI also runs CodeQL, govulncheck and dependency review (no vulnerable or
 copyleft dependencies). Labels are applied automatically.
 
+**Workflows:** pin any third-party action (not `actions/*` or `github/*`) to a
+full commit SHA with the version as a comment, e.g.
+`uses: owner/action@<40-char sha> # v2.1.0`. Tags can be moved; commits can't.
+Dependabot keeps the pins up to date.
+
 Go 1.26.11+ (the `go` command fetches it automatically).
 
 ## Connectors
