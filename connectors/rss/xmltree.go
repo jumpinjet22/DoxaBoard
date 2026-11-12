@@ -39,7 +39,7 @@ func parseXML(b []byte) (*node, error) {
 	)
 	for {
 		tok, err := d.Token()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {

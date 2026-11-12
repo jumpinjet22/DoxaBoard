@@ -50,7 +50,7 @@ func (c Connector) New(cfg registry.Config, deps registry.Deps) (registry.Source
 	}
 	u, err := url.Parse(cfg["url"])
 	if err != nil {
-		return nil, fmt.Errorf("jsonfeed: feed URL: %v", err)
+		return nil, fmt.Errorf("jsonfeed: feed URL: %w", err)
 	}
 	if deps.HTTP == nil {
 		return nil, errors.New("jsonfeed: no HTTP client")
