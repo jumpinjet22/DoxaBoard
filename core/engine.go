@@ -142,7 +142,7 @@ func (e *Engine) pollInterval() time.Duration {
 // jitter spreads requests ±20% so a building full of screens rebooting after
 // a power cut doesn't hit the server in the same second.
 func jitter(d time.Duration) time.Duration {
-	f := 0.8 + rand.Float64()*0.4
+	f := 0.8 + rand.Float64()*0.4 //nolint:gosec // load-spreading jitter, not security
 	return time.Duration(float64(d) * f)
 }
 
@@ -237,7 +237,7 @@ func (e *Engine) probeAll(ctx context.Context, now time.Time) {
 // and the caller should decide again.
 func (e *Engine) apply(ctx context.Context, next Mode, now time.Time) bool {
 	slideChanged := e.state.Slideshow != e.slideSpec
-	if next.Equal(e.applied) && !(next.Kind == ModeSlideshow && slideChanged) {
+	if next.Equal(e.applied) && (next.Kind != ModeSlideshow || !slideChanged) {
 		return true
 	}
 	e.Logf("switching %s -> %s", describe(e.applied), describe(next))

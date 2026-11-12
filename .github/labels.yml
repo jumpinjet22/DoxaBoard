@@ -1,0 +1,79 @@
+# Source of truth for repo labels, synced by .github/workflows/labels.yml.
+# Edit here, not in the GitHub UI.
+
+# Type
+- name: bug
+  color: d73a4a
+  description: Something isn't working
+- name: enhancement
+  color: a2eeef
+  description: New feature or improvement
+- name: docs
+  color: 0075ca
+  description: Documentation
+- name: question
+  color: d876e3
+  description: Further information is requested
+- name: security
+  color: b60205
+  description: Security hardening (report vulnerabilities privately, not in issues)
+
+# Area
+- name: connector
+  color: 5319e7
+  description: Content connectors (connectors/)
+- name: server
+  color: 1d76db
+  description: Control plane and admin console
+- name: agent
+  color: 0e8a16
+  description: Screen agent (Pi)
+- name: core
+  color: 006b75
+  description: Shared core, failover and slide schema
+- name: ci
+  color: ededed
+  description: CI, workflows and tooling
+- name: deploy
+  color: c5def5
+  description: Docker, relay, install scripts
+- name: dependencies
+  color: 0366d6
+  description: Dependency updates
+- name: go
+  color: 00add8
+  description: Go module updates
+- name: docker
+  color: 2496ed
+  description: Docker image updates
+
+# Connector workflow
+- name: proposal
+  color: fbca04
+  description: Proposed new connector
+- name: listing
+  color: c2e0c6
+  description: Request to list a community sidecar connector
+
+# Status
+- name: needs-triage
+  color: fef2c0
+  description: Not looked at by a maintainer yet
+- name: waiting-for-author
+  color: fbca04
+  description: Needs a reply from the author; closes if inactive
+- name: needs-maintainer
+  color: e99695
+  description: Connector whose maintainer hasn't responded in 90 days
+- name: stale
+  color: cfd3d7
+  description: No recent activity
+- name: pinned
+  color: 000000
+  description: Never marked stale
+- name: good first issue
+  color: 7057ff
+  description: Good for newcomers
+- name: help wanted
+  color: 008672
+  description: Extra attention is needed

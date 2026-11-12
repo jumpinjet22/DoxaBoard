@@ -73,7 +73,7 @@ func TestCheckFeedCatchesProblems(t *testing.T) {
 			// New IDs on every request: the classic bug.
 			i := n.Add(1)
 			w.Write([]byte(`{"schema":"doxacast.slides/v1","slides":[{"id":"x` +
-				string(rune('0'+i)) + `","title":"Hi"}]}`))
+				string('0'+i) + `","title":"Hi"}]}`))
 		case "/notimage":
 			w.Write([]byte(`{"schema":"doxacast.slides/v1","slides":[{"id":"a","image":{"url":"/page","alt":"x"}}]}`))
 		case "/page":

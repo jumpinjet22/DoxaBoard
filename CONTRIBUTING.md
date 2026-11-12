@@ -15,7 +15,11 @@ Thanks for helping! A few things keep this project healthy.
 make lint test      # gofmt, vet, tests with the race detector
 make build          # arm64, armv7 and amd64 binaries in ./dist
 make run-server     # local server with throwaway tokens
+golangci-lint run   # the same linters CI runs (config in .golangci.yml)
 ```
+
+CI also runs CodeQL, govulncheck and dependency review (no vulnerable or
+copyleft dependencies). Labels are applied automatically.
 
 Go 1.26.11+ (the `go` command fetches it automatically).
 

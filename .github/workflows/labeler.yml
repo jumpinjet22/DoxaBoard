@@ -1,0 +1,60 @@
+name: Labeler
+
+# Labels PRs by the files they touch, and issues by the "Area" field in the
+# issue forms.
+#
+# PRs use `pull_request_target` so fork PRs can be labeled. That is safe here
+# ONLY because this workflow never checks out or runs PR code: it reads the
+# list of changed files through the API. Don't add a checkout of the PR head
+# to this file.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+
+jobs:
+  pr:
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          sync-labels: false
+
+  issue-area:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            // Issue forms render "### Area" followed by the chosen option.
+            // The body is untrusted text: we only match it against a fixed
+            // map, never execute or interpolate it.
+            const areas = {
+              "Screens / agent (Pi)": "agent",
+              "Server / admin console": "server",
+              "Connectors / content": "connector",
+              "Relay / streaming": "deploy",
+              "Install / deploy": "deploy",
+              "Docs": "docs",
+            };
+            const body = context.payload.issue.body || "";
+            const m = body.match(/### Area\s+([^\n]+)/);
+            const label = m && areas[m[1].trim()];
+            if (label) {
+              await github.rest.issues.addLabels({
+                ...context.repo,
+                issue_number: context.payload.issue.number,
+                labels: [label],
+              });
+            }

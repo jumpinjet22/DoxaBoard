@@ -1,0 +1,44 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  # standard set: errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    - bodyclose    # HTTP response bodies are closed
+    - errorlint    # errors.Is/As instead of == on wrapped errors
+    - gosec        # security issues
+    - misspell
+    - nilerr       # returning nil when an error was checked
+    - noctx        # HTTP requests carry a context
+    - unconvert
+  settings:
+    errcheck:
+      exclude-functions:
+        - (net/http.ResponseWriter).Write
+        - (*encoding/json.Encoder).Encode
+        - (io.Closer).Close
+        - (*os.File).Close
+    gosec:
+      excludes:
+        - G104 # unchecked errors: errcheck covers this, with sensible exclusions
+        - G204 # subprocess with variable args: the agent runs mpv/ffprobe by design
+        - G304 # file path from variable: paths come from config or are validated
+        - G301 # 0755 directories are intended
+        - G306 # file permissions are chosen per file
+  exclusions:
+    presets:
+      - std-error-handling
+    rules:
+      # Tests may ignore errors and use fixed inputs freely.
+      - path: _test\.go
+        linters: [errcheck, gosec, bodyclose, noctx]
+      # Generated-code templates aren't compiled here.
+      - path: cmd/doxacast-connector/templates/
+        linters: [all]
+
+formatters:
+  enable:
+    - gofmt

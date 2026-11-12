@@ -1,0 +1,25 @@
+# PR labels by changed files (actions/labeler v5 format).
+connector:
+  - changed-files:
+      - any-glob-to-any-file: ["connectors/**", "cmd/doxacast-connector/**", "community-connectors.yaml"]
+server:
+  - changed-files:
+      - any-glob-to-any-file: ["internal/server/**", "cmd/doxacast-server/**"]
+agent:
+  - changed-files:
+      - any-glob-to-any-file: ["internal/agent/**", "cmd/doxacast-agent/**", "deploy/agent/**"]
+core:
+  - changed-files:
+      - any-glob-to-any-file: ["core/**", "slides/**"]
+deploy:
+  - changed-files:
+      - any-glob-to-any-file: ["deploy/**"]
+ci:
+  - changed-files:
+      - any-glob-to-any-file: [".github/**", ".golangci.yml", "Makefile"]
+docs:
+  - changed-files:
+      - any-glob-to-any-file: ["docs/**", "**/*.md"]
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file: ["go.mod", "go.sum"]

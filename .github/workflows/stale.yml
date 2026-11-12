@@ -1,0 +1,50 @@
+name: Stale
+
+# Gentle by design: most contributors are volunteers.
+# - Issues only go stale while we're waiting on the author.
+# - PRs go stale after 45 quiet days and close 21 days after that.
+# - Anything with activity, or labeled pinned/security/needs-maintainer, is left alone.
+on:
+  schedule:
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v9
+        with:
+          # Issues: only those waiting on the author.
+          only-issue-labels: waiting-for-author
+          days-before-issue-stale: 30
+          days-before-issue-close: 14
+          stale-issue-message: >
+            We haven't heard back in 30 days, so this is marked stale. It will close
+            in 14 days unless there's a new comment. No hard feelings: reopen it
+            anytime with the details.
+          close-issue-message: Closing for now. Comment or reopen whenever you're ready.
+          close-issue-reason: not_planned
+
+          # PRs: any quiet PR, except drafts and dependency bumps.
+          days-before-pr-stale: 45
+          days-before-pr-close: 21
+          exempt-draft-pr: true
+          stale-pr-message: >
+            This PR has been quiet for 45 days, so it's marked stale. It will close in
+            21 days unless there's new activity. If you're still working on it, just
+            leave a comment.
+          close-pr-message: Closing due to inactivity. Thanks for the work. Feel free to reopen.
+
+          stale-issue-label: stale
+          stale-pr-label: stale
+          exempt-issue-labels: pinned,security,needs-maintainer
+          exempt-pr-labels: pinned,security,dependencies
+          remove-stale-when-updated: true
+          operations-per-run: 60

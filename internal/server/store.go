@@ -76,7 +76,7 @@ func OpenStore(path string) (*Store, error) {
 		return nil, err
 	}
 	db.SetMaxOpenConns(1) // SQLite: one writer; keeps things simple and safe
-	if _, err := db.Exec(schema); err != nil {
+	if _, err := db.ExecContext(context.Background(), schema); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("migrate: %w", err)
 	}
@@ -104,7 +104,7 @@ func (s *Store) write(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }() // no-op after Commit
 	if err := fn(tx); err != nil {
 		return err
 	}
@@ -223,7 +223,8 @@ func (s *Store) GetDevice(ctx context.Context, id string) (*Device, error) {
 const deviceCols = `id, name, hostname, platform, profile_id, display, created_at, last_seen, heartbeat`
 
 func (s *Store) getDevice(ctx context.Context, where string, arg any) (*Device, error) {
-	row := s.db.QueryRowContext(ctx, `SELECT `+deviceCols+` FROM devices WHERE `+where, arg)
+	// where is a constant chosen by our own callers; values are always bound as args.
+	row := s.db.QueryRowContext(ctx, `SELECT `+deviceCols+` FROM devices WHERE `+where, arg) //nolint:gosec // see above
 	d, err := scanDevice(row)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound

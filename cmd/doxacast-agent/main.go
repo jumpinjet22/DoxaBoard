@@ -121,7 +121,7 @@ func enroll(ctx context.Context, cfg agent.Config, logger *log.Logger) (agent.Cr
 		select {
 		case <-ctx.Done():
 			return creds, ctx.Err()
-		case <-time.After(backoff + time.Duration(rand.Int64N(int64(time.Second)))):
+		case <-time.After(backoff + time.Duration(rand.Int64N(int64(time.Second)))): //nolint:gosec // retry jitter, not security
 		}
 		backoff = min(backoff*2, 2*time.Minute)
 	}
