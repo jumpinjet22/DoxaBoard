@@ -1,0 +1,50 @@
+{
+  "schema": "doxacast.slides/v1",
+  "generator": "rock-sidecar 0.3.1",
+  "slides": [
+    {
+      "id": "event-4411",
+      "title": "Fall Festival",
+      "body": "Sunday, October 26 after the 10:30 service. Food trucks, games and a bounce house for the kids.",
+      "image": {"url": "/media/fall-festival.jpg", "alt": "Children on a hay ride"},
+      "starts_at": "2025-12-01T00:00:00Z",
+      "expires_at": "2026-02-01T00:00:00Z",
+      "order": 10,
+      "tags": ["lobby", "kids"],
+      "updated_at": "2025-11-20T15:04:05Z"
+    },
+    {
+      "id": "event-4412",
+      "title": "Men's Breakfast",
+      "body": "Saturday 8am in the fellowship hall.",
+      "order": 20,
+      "duration_seconds": 15
+    },
+    {
+      "id": "photo-77",
+      "image": {"url": "https://cdn.example.org/photos/choir.jpg", "alt": "The choir singing on Christmas Eve"},
+      "order": 30
+    },
+    {
+      "id": "expired-1",
+      "title": "Christmas Eve services",
+      "expires_at": "2025-12-25T06:00:00Z",
+      "order": 40
+    },
+    {
+      "id": "broken-no-content",
+      "body": "This slide has neither a title nor an image.",
+      "order": 50
+    },
+    {
+      "id": "event-4412",
+      "title": "Duplicate id",
+      "order": 60
+    },
+    {
+      "id": "bad-scheme",
+      "title": "Sneaky",
+      "image": {"url": "javascript:alert(1)"}
+    }
+  ]
+}
