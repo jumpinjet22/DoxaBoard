@@ -66,10 +66,12 @@ func htmlToText(s string) string {
 }
 
 // tagEnd returns the index of the '>' that ends the tag starting at s[i],
-// skipping quoted attribute values, or -1.
-func tagEnd(s string, i int) int {
+// skipping quoted attribute values, or -1. If quotes are unbalanced
+// (e.g. <a href="x>link</a>, a common typo), it falls back to the first
+// '>' so the broken tag is still removed instead of shown as text.
+func tagEnd(s string, start int) int {
 	var quote byte
-	for ; i < len(s); i++ {
+	for i := start; i < len(s); i++ {
 		c := s[i]
 		switch {
 		case quote != 0:
@@ -81,6 +83,16 @@ func tagEnd(s string, i int) int {
 		case c == '>':
 			return i
 		case c == '<':
+			return -1
+		}
+	}
+	// The quote-aware scan reached the end: the quotes were unbalanced or
+	// hid the real '>'. Fall back to the first '>' before any '<'.
+	for i := start; i < len(s); i++ {
+		switch s[i] {
+		case '>':
+			return i
+		case '<':
 			return -1
 		}
 	}

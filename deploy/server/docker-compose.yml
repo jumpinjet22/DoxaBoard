@@ -33,8 +33,9 @@ services:
 
   relay:
     # The -ffmpeg variant includes ffmpeg for the multicast and Vimeo outputs.
-    # Pin a version you've tested; bump deliberately.
-    image: bluenviron/mediamtx:1.21.3-ffmpeg
+    # Pinned by tag AND digest: the tag is for humans, the digest is what
+    # actually gets pulled. Dependabot updates both.
+    image: bluenviron/mediamtx:1.21.3-ffmpeg@sha256:208e9f1740a09a5ee63b6308e77ce0d54fce0456462f640e6bd9acfc62ebb5a2
     restart: unless-stopped
     network_mode: host
     environment:
@@ -48,7 +49,7 @@ services:
 
   rclone:
     # Mirrors a OneDrive folder into ./photos. Each subfolder is an album.
-    image: rclone/rclone:1.76
+    image: rclone/rclone:1.76@sha256:7cbeec24a44f206067597c0368be4de90ae19a64d5113c7d1938bd737a81e466
     restart: unless-stopped
     entrypoint: ["/bin/sh", "-c"]
     command:
