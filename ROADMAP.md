@@ -113,6 +113,9 @@ start/expire, order, duration). A profile's slideshow can merge several sources.
 
 ## Milestone 5: Hardening for other churches ⬜
 
+- ⬜ **Relay publish credentials**: today anyone on the LAN can publish to the
+  relay while OBS is offline (takeover during a live stream is already blocked).
+  Require a publish user/password (or OBS's IP) and document it in docs/obs.md.
 - ⬜ TLS guidance (reverse proxy) and optional built-in ACME
 - ⬜ Rotate enrollment token; revoke and re-enroll devices
 - ⬜ Agent self-update from the server (signed binaries)

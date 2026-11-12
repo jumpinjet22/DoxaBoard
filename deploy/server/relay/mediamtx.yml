@@ -1,4 +1,5 @@
 # mediamtx relay for DoxaCast. OBS publishes once; everyone else reads.
+# Written for mediamtx 1.21. Check the release notes before bumping.
 #
 # OBS publish (Settings > Stream > Custom):
 #   SRT:  srt://<server-ip>:8890?streamid=publish:live&pkt_size=1316
@@ -12,27 +13,31 @@
 
 logLevel: info
 
-rtsp: yes
+rtsp: true
 rtspAddress: :8554
-protocols: [tcp]
+rtspTransports: [tcp]
 
-rtmp: yes
+rtmp: true
 rtmpAddress: :1935
 
-srt: yes
+srt: true
 srtAddress: :8890
 
-hls: yes
+hls: true
 hlsAddress: :8888
 # Low-latency HLS for smart TVs and the Android app (2-3 s behind live).
 hlsVariant: lowLatency
 hlsSegmentCount: 7
 
-webrtc: no
+webrtc: false
 
 paths:
   live:
+    # Don't let another client kick OBS off and publish in its place.
+    # (Anyone on the network can still publish while OBS is offline:
+    # see the publish-credentials item in ROADMAP.md.)
+    overridePublisher: false
     # When OBS starts publishing, start multicast fanout and the Vimeo push.
     # Both are copies (no transcoding), so CPU use is negligible.
-    runOnReady: /on-ready.sh
-    runOnReadyRestart: yes
+    runOnAvailable: /on-ready.sh
+    runOnAvailableRestart: true
