@@ -3,6 +3,7 @@ package cloud
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -271,7 +272,7 @@ func TestFailedAndCancelledSignInLeaveNothingBehind(t *testing.T) {
 		t.Fatal(err)
 	}
 	m.Cancel(ctx)
-	if _, err := m.Finish(ctx, "http://localhost:53682/?code=abc&state=S123"); err != ErrNoSignIn {
+	if _, err := m.Finish(ctx, "http://localhost:53682/?code=abc&state=S123"); !errors.Is(err, ErrNoSignIn) {
 		t.Errorf("after cancel: %v", err)
 	}
 	f.mu.Lock()

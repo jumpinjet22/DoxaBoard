@@ -20,7 +20,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/jumpinjet22/doxaboard/internal/content"
@@ -228,11 +227,11 @@ func parseHex(v string) (color.Color, bool) {
 	if len(v) == 3 {
 		v = string([]byte{v[0], v[0], v[1], v[1], v[2], v[2]})
 	}
-	n, err := strconv.ParseUint(v, 16, 32)
-	if err != nil {
+	b, err := hex.DecodeString(v)
+	if err != nil || len(b) != 3 {
 		return nil, false
 	}
-	return color.RGBA{R: uint8(n >> 16), G: uint8(n >> 8), B: uint8(n), A: 0xff}, true
+	return color.RGBA{R: b[0], G: b[1], B: b[2], A: 0xff}, true
 }
 
 // TextStyle is the style for rendered text slides. Unset parts fall back

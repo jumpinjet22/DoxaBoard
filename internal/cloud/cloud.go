@@ -117,7 +117,19 @@ type signIn struct {
 	state     string
 	authURL   string
 	cancel    context.CancelFunc
-	done      chan error
+	// done is closed when rclone's setup call returns; err is its result
+	// and may be read once done is closed.
+	done chan struct{}
+	err  error
+}
+
+// stop abandons the flow and waits for its goroutine to finish.
+func (s *signIn) stop() {
+	s.cancel()
+	select {
+	case <-s.done:
+	case <-time.After(10 * time.Second):
+	}
 }
 
 func (m *Manager) logf(format string, args ...any) {
@@ -174,7 +186,7 @@ func (m *Manager) rc(ctx context.Context, method string, in, out any) error {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		return fmt.Errorf("%w (%v)", ErrUnavailable, err)
+		return fmt.Errorf("%w: %w", ErrUnavailable, err)
 	}
 	defer resp.Body.Close()
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 16<<20))
@@ -340,7 +352,7 @@ func (m *Manager) Connect(ctx context.Context, typ string) (string, error) {
 	// Saying yes makes rclone open its listener and wait for the admin. The
 	// call returns once they've signed in; then accept the remaining defaults.
 	flowCtx, cancel := context.WithTimeout(context.Background(), signInTimeout)
-	s := &signIn{name: name, typ: typ, cancel: cancel, done: make(chan error, 1)}
+	s := &signIn{name: name, typ: typ, cancel: cancel, done: make(chan struct{})}
 	go func() {
 		q, err := m.configStep(flowCtx, name, typ, nil, q.State, "true")
 		for i := 0; err == nil && q.State != ""; i++ {
@@ -350,7 +362,8 @@ func (m *Manager) Connect(ctx context.Context, typ string) (string, error) {
 			}
 			q, err = m.configStep(flowCtx, name, typ, nil, q.State, defaultAnswer(q))
 		}
-		s.done <- err
+		s.err = err
+		close(s.done)
 	}()
 
 	// rclone only reports its sign-in link in the log.
@@ -358,23 +371,22 @@ func (m *Manager) Connect(ctx context.Context, typ string) (string, error) {
 	var link string
 	for link == "" {
 		select {
-		case err := <-s.done:
+		case <-s.done:
 			cancel()
+			err := s.err
 			if err == nil {
 				err = errors.New("rclone finished without asking anyone to sign in")
 			}
 			return fail(err)
 		case <-ctx.Done():
-			cancel()
-			<-s.done
+			s.stop()
 			return fail(ctx.Err())
 		case <-time.After(150 * time.Millisecond):
 		}
 		if hit := authLinkRE.FindStringSubmatch(readFrom(m.LogFile, logAt)); hit != nil {
 			link, s.state = hit[0], hit[1]
 		} else if time.Now().After(deadline) {
-			cancel()
-			<-s.done
+			s.stop()
 			return fail(errors.New("rclone didn't start a sign-in (no link in its log)"))
 		}
 	}
@@ -391,9 +403,11 @@ func (m *Manager) Connect(ctx context.Context, typ string) (string, error) {
 		s.authURL = resp.Header.Get("Location")
 	}
 	if au, perr := url.Parse(s.authURL); err != nil || perr != nil || au.Scheme != "https" || au.Host == "" {
-		cancel()
-		<-s.done
-		return fail(fmt.Errorf("couldn't get the sign-in page from rclone (%v)", err))
+		s.stop()
+		if err == nil {
+			err = errors.New("its reply had no sign-in address")
+		}
+		return fail(fmt.Errorf("couldn't get the sign-in page from rclone: %w", err))
 	}
 
 	m.mu.Lock()
@@ -473,12 +487,13 @@ func (m *Manager) Finish(ctx context.Context, pasted string) (Drive, error) {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, replay.String(), nil)
 	resp, err := (&http.Client{Timeout: 30 * time.Second}).Do(req)
 	if err != nil {
-		return Drive{}, fmt.Errorf("couldn't hand the sign-in to rclone: %v", err)
+		return Drive{}, fmt.Errorf("couldn't hand the sign-in to rclone: %w", err)
 	}
 	resp.Body.Close()
 
 	select {
-	case err = <-s.done:
+	case <-s.done:
+		err = s.err
 	case <-time.After(90 * time.Second):
 		err = errors.New("rclone took too long to finish setting up the drive")
 	case <-ctx.Done():
@@ -492,7 +507,7 @@ func (m *Manager) Finish(ctx context.Context, pasted string) (Drive, error) {
 	s.cancel()
 	if err != nil {
 		m.deleteRemote(s.name)
-		return Drive{}, fmt.Errorf("the provider didn't accept the sign-in: %v", err)
+		return Drive{}, fmt.Errorf("the provider didn't accept the sign-in: %w", err)
 	}
 	p, _ := provider(s.typ)
 	m.logf("cloud: connected %s as %q", p.Title, s.name)
@@ -552,7 +567,7 @@ func cleanPath(p string) (string, error) {
 	p = strings.Trim(strings.ReplaceAll(strings.TrimSpace(p), `\`, "/"), "/")
 	for _, part := range strings.Split(p, "/") {
 		if part == ".." || part == "." {
-			return "", errors.New("folder paths can't contain . or ..")
+			return "", errors.New("folder paths can't contain . or .. as a folder name")
 		}
 	}
 	if len(p) > 1000 || strings.ContainsAny(p, "\x00\r\n") {
@@ -669,7 +684,8 @@ func (m *Manager) AddFolder(ctx context.Context, drive, path, album string) (Fol
 	if err != nil {
 		return Folder{}, err
 	}
-	go m.Sync(context.Background(), f.ID)
+	// The first sync outlives this request; its result lands in the folder's status.
+	go func(ctx context.Context) { _ = m.Sync(ctx, f.ID) }(context.WithoutCancel(ctx))
 	return f, nil
 }
 
