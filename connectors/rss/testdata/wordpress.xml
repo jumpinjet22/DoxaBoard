@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Grace Community Church</title>
+	<atom:link href="https://gracecommunity.example.org/feed/" rel="self" type="application/rss+xml" />
+	<link>https://gracecommunity.example.org</link>
+	<description>Loving God, loving people</description>
+	<lastBuildDate>Tue, 30 Dec 2025 18:22:41 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.8.1</generator>
+	<item>
+		<title>Christmas Eve Candlelight Services &#8211; 4pm &#038; 6pm</title>
+		<link>https://gracecommunity.example.org/2025/12/christmas-eve-candlelight/</link>
+		<comments>https://gracecommunity.example.org/2025/12/christmas-eve-candlelight/#respond</comments>
+		<dc:creator><![CDATA[Pastor Dan]]></dc:creator>
+		<pubDate>Mon, 15 Dec 2025 14:03:12 +0000</pubDate>
+		<category><![CDATA[Events]]></category>
+		<guid isPermaLink="false">https://gracecommunity.example.org/?p=2207</guid>
+		<description><![CDATA[<p>Join us for one of our two candlelight services on Christmas Eve. Childcare is available for ages 0&#8211;4 at the 4pm service. Bring a friend!&nbsp;</p>
+<p>The post <a href="https://gracecommunity.example.org/2025/12/christmas-eve-candlelight/">Christmas Eve Candlelight Services &#8211; 4pm &#038; 6pm</a> appeared first on <a href="https://gracecommunity.example.org">Grace Community Church</a>.</p>
+]]></description>
+		<content:encoded><![CDATA[<figure class="wp-block-image size-large"><img fetchpriority="high" decoding="async" width="1024" height="576" src="https://gracecommunity.example.org/wp-content/uploads/2025/12/candles-1024x576.jpg" alt="" class="wp-image-2209" srcset="https://gracecommunity.example.org/wp-content/uploads/2025/12/candles-1024x576.jpg 1024w, https://gracecommunity.example.org/wp-content/uploads/2025/12/candles-300x169.jpg 300w" sizes="(max-width: 1024px) 100vw, 1024px" /></figure>
+<p>Join us for one of our two candlelight services on Christmas Eve. Childcare is available for ages 0&#8211;4 at the 4pm service.</p>
+<script>window.wpAnalytics && wpAnalytics.track("post");</script>
+<p>Bring a friend!</p>
+]]></content:encoded>
+		<wfw:commentRss>https://gracecommunity.example.org/2025/12/christmas-eve-candlelight/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+	</item>
+	<item>
+		<title>Youth Winter Retreat registration is open</title>
+		<link>https://gracecommunity.example.org/2025/12/youth-winter-retreat/</link>
+		<dc:creator><![CDATA[Jess Morgan]]></dc:creator>
+		<pubDate>Wed, 3 Dec 2025 09:30:00 EST</pubDate>
+		<category><![CDATA[Youth]]></category>
+		<guid isPermaLink="false">https://gracecommunity.example.org/?p=2190</guid>
+		<description><![CDATA[Grades 6&#8211;12 head to Camp Pinewood January 16&#8211;18. Early-bird price ends December 20 &#8230;]]></description>
+		<content:encoded><![CDATA[<p>Grades 6&#8211;12 head to <strong>Camp Pinewood</strong> January 16&#8211;18.</p>
+<p><img loading="lazy" decoding="async" src="/wp-content/uploads/2025/12/retreat.png" alt="Students around a campfire" width="800" height="600" /></p>
+<p>Early-bird price ends December 20.</p>
+]]></content:encoded>
+	</item>
+	<item>
+		<title>Sermon notes: Advent week 2</title>
+		<link>https://gracecommunity.example.org/2025/12/sermon-notes-advent-2/</link>
+		<dc:creator><![CDATA[Pastor Dan]]></dc:creator>
+		<pubDate>Sun, 07 Dec 2025 20:00:00 +0000</pubDate>
+		<guid isPermaLink="false">https://gracecommunity.example.org/?p=2195</guid>
+		<description>&lt;p&gt;Isaiah 40:1&amp;#8211;11. &amp;#8220;Comfort, comfort my people.&amp;#8221;&lt;/p&gt;</description>
+	</item>
+	<item>
+		<title></title>
+		<link>https://gracecommunity.example.org/2025/12/untitled/</link>
+		<pubDate>Sat, 06 Dec 2025 10:00:00 +0000</pubDate>
+		<guid isPermaLink="false">https://gracecommunity.example.org/?p=2194</guid>
+		<description><![CDATA[<p>A post with no title and no image is skipped.</p>]]></description>
+	</item>
+</channel>
+</rss>
