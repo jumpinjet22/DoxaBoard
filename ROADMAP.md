@@ -12,6 +12,10 @@ Status key: ✅ done · 🚧 in progress · ⬜ not started
 
 - ✅ Repo, Apache-2.0 license, Go module, CI (vet, test, race, arm64 build)
 - ✅ Architecture, network, hardware and OBS docs
+- ✅ Security tooling: CodeQL, golangci-lint, govulncheck, dependency review,
+  OpenSSF Scorecard, nightly fuzzing, Dependabot, SHA/digest pinning
+- ✅ Contributor setup: CONTRIBUTING (DCO), SECURITY policy, issue forms,
+  PR template, CODEOWNERS, auto-labeling, gentle stale bot
 
 ## Milestone 1: Control plane + Pi agent MVP 🚧
 
@@ -88,7 +92,7 @@ Brand everything from one place, with no code changes.
 - ⬜ Test hardware: Google TV Streamer, onn 4K Pro (built-in Ethernet)
 - ⬜ Web player page as a zero-install option for one-off screens
 
-## Milestone 4.5: Content sources (Rock RMS and other CMSes) ⬜
+## Milestone 4.5: Content sources (Rock RMS and other CMSes) 🚧
 
 Slides can come from anywhere, through one provider interface on the server.
 Screens never talk to a CMS directly: the server pulls, caches images, and
@@ -97,10 +101,19 @@ hands screens a manifest, so a CMS outage never blanks a TV.
 **The interface:** each provider returns slides (title, body, image,
 start/expire, order, duration). A profile's slideshow can merge several sources.
 
+**Foundation:**
+- ✅ Slide feed format `doxacast.slides/v1` with validation and a JSON Schema
+- ✅ Connector registry, host-guarded HTTP client, conformance kit
+- ✅ `doxacast-connector` CLI: `check-feed`, `new` (scaffold), `lint`; Python sidecar example
+- ✅ Contributor docs (docs/connectors.md), proposal and listing issue forms
+- ⬜ **Wire connectors into the server**: sources in profiles, server-side image cache
+  and resize, console form generated from connector fields
+- ⬜ Listing bot and nightly re-check for community sidecars
+
 **Universal sources (cover most CMSes with no custom code):**
-- ⬜ Folder: anything rclone supports (OneDrive, Google Drive, Dropbox, SharePoint, S3, SMB...)
-- ⬜ RSS / Atom feed with images (WordPress, Squarespace, Rock channel feeds, most CMSes)
-- ⬜ Generic JSON feed: a small documented schema anyone can point a script,
+- ✅ Folder: anything rclone supports (OneDrive, Google Drive, Dropbox, SharePoint, S3, SMB...)
+- ✅ RSS / Atom feed with images (WordPress, Squarespace, Rock channel feeds, most CMSes)
+- ✅ Generic JSON feed: a small documented schema anyone can point a script,
   Zapier/Make flow or CMS template at
 
 **First-class connectors:**

@@ -1,15 +1,18 @@
 # DoxaCast
 
 [![CI](https://github.com/jumpinjet22/DoxaCast/actions/workflows/ci.yml/badge.svg)](https://github.com/jumpinjet22/DoxaCast/actions/workflows/ci.yml)
+[![Lint](https://github.com/jumpinjet22/DoxaCast/actions/workflows/lint.yml/badge.svg)](https://github.com/jumpinjet22/DoxaCast/actions/workflows/lint.yml)
 [![CodeQL](https://github.com/jumpinjet22/DoxaCast/actions/workflows/codeql.yml/badge.svg)](https://github.com/jumpinjet22/DoxaCast/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/jumpinjet22/DoxaCast/badge)](https://scorecard.dev/viewer/?uri=github.com/jumpinjet22/DoxaCast)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 **One live stream, every screen in the building, and screens that keep going no matter what.**
 
 DoxaCast takes a single stream from OBS and puts it on every TV in a church
 (or school, or office) over the network you already have. When nothing is
-live, screens show a photo slideshow synced from OneDrive. It also pushes the
-same stream to Vimeo, so you only encode once.
+live, screens show slides and photos from the places your content already
+lives: a OneDrive folder today, RSS feeds, Rock RMS and other systems through
+connectors. It also pushes the same stream to Vimeo, so you only encode once.
 
 > *Doxa* (δόξα) is Greek for "glory," as in *Gloria Dei* and *doxology*.
 > "Let your light shine before others, that they may see your good deeds and
@@ -18,12 +21,12 @@ same stream to Vimeo, so you only encode once.
 ## How it works
 
 ```
-                         ┌──────────────────── server (Docker) ────────────────────┐
-OBS ──SRT──▶ relay (mediamtx) ──┬── multicast ──▶ every screen on the LAN         │
-                                ├── SRT / RTSP / LL-HLS ──▶ screens that pull      │
-                                └── RTMPS ──▶ Vimeo                                │
-             OneDrive ──rclone──▶ photos ──▶ doxacast-server ◀── admin console     │
-                         └──────────────────────────────────────────────────────────┘
+                         ┌───────────────────── server (Docker) ─────────────────────┐
+OBS ──SRT──▶ relay (mediamtx) ──┬── multicast ──▶ every screen on the LAN           │
+                                ├── SRT / RTSP / LL-HLS ──▶ screens that pull        │
+                                └── RTMPS ──▶ Vimeo                                  │
+   OneDrive, RSS, Rock, ... ──▶ connectors ──▶ doxacast-server ◀── admin console     │
+                         └────────────────────────────────────────────────────────────┘
                                                    ▲
                           desired state / heartbeats
                                                    │
@@ -35,16 +38,29 @@ Every screen runs a small agent that tries sources in priority order and fails o
 1. **Multicast** from the relay: one stream for the whole building, lowest latency
 2. **Unicast SRT/RTSP** from the relay, if multicast isn't arriving
 3. **Vimeo** (HLS), if the relay is down
-4. **Photo slideshow**, if nothing is live
-5. **Cached photos**, if the network is down
+4. **Slideshow**, if nothing is live
+5. **Cached slides**, if the network is down
 
 The control plane is central, but screens don't depend on it. If the server
 goes down, every screen keeps doing what it was last told, even across reboots.
 
 ## Status
 
-Early MVP. The core, server and agent are covered by automated tests, but it
-**hasn't been run on real Pis and TVs yet**. That's next. See [ROADMAP.md](ROADMAP.md).
+**Early, pre-1.0.** Here's what's real today:
+
+| Piece | State |
+|---|---|
+| Failover core, control plane, admin console | ✅ Built, tested |
+| Pi agent (mpv, probes, slideshow, watchdog) | ✅ Built, tested |
+| Relay stack (mediamtx, multicast, Vimeo push, rclone) | ✅ Built; config checked against mediamtx 1.21 |
+| OneDrive photo slideshow | ✅ Works through the server's photo albums |
+| Connectors: JSON feed, RSS/Atom, folder | ✅ Built and fuzz-tested; ⬜ **not yet selectable in the console** |
+| Rock RMS, WordPress, Planning Center connectors | ⬜ Planned |
+| Running on real Pis and TVs | ⬜ **Not yet**: the next milestone |
+
+Everything is covered by automated tests, but **nobody has run it on real
+hardware yet**. Don't put it in front of a congregation until that changes.
+See [ROADMAP.md](ROADMAP.md).
 
 ## Quick start
 
@@ -53,8 +69,8 @@ Early MVP. The core, server and agent are covered by automated tests, but it
 You need a Linux box on the same network as the screens, with Docker.
 
 ```sh
-git clone https://github.com/jumpinjet22/doxacast
-cd doxacast/deploy/server
+git clone https://github.com/jumpinjet22/DoxaCast
+cd DoxaCast/deploy/server
 cp .env.example .env            # set the two tokens: openssl rand -hex 24
 mkdir -p data photos && sudo chown 65532:65532 data
 docker compose run --rm rclone config   # create a remote named "onedrive"
@@ -74,7 +90,7 @@ See [docs/obs.md](docs/obs.md).
 
 ### 3. Screens (Raspberry Pi)
 
-Raspberry Pi OS Lite, wired Ethernet. Build or download the agent, then run:
+Raspberry Pi OS Lite, wired Ethernet. Build the agent (`make build`), then on the Pi:
 
 ```sh
 sudo deploy/agent/install.sh ./doxacast-agent-linux-arm64 http://<server>:8080 <DOXACAST_ENROLLMENT_TOKEN>
@@ -82,33 +98,74 @@ sudo deploy/agent/install.sh ./doxacast-agent-linux-arm64 http://<server>:8080 <
 
 The Pi appears in the admin console. Create a profile, assign it, and you're done.
 
-## Build
+## Content connectors
+
+Slides can come from almost anywhere, and most systems need no code at all:
+
+- **RSS / Atom:** WordPress, Squarespace, most church website builders
+- **JSON feed:** the [`doxacast.slides/v1`](docs/connectors.md#the-slide-feed) format. Anything that can output JSON can feed DoxaCast.
+- **Folder:** any album the server can see, e.g. OneDrive, Google Drive or Dropbox via rclone
+
+Want to connect something else? Write a **sidecar** in any language (start
+from [`examples/sidecar-python`](examples/sidecar-python)), or an **in-tree** Go
+connector. The `doxacast-connector` tool runs the same checks CI does:
 
 ```sh
-go test ./...
-make build        # linux/arm64, linux/arm (armv7) and linux/amd64 into ./dist
+go run ./cmd/doxacast-connector check-feed http://localhost:8090/feed   # any-language sidecars
+go run ./cmd/doxacast-connector new my-cms                             # scaffold a Go connector
+make connector-check NAME=mycms                                         # what CI runs
 ```
 
-Go 1.26+. No cgo; everything cross-compiles.
+Everything you need is in [docs/connectors.md](docs/connectors.md).
+
+## Build and test
+
+```sh
+make lint test        # gofmt, vet, tests with the race detector
+make build            # agent, server and connector tool for arm64, armv7 and amd64 → ./dist
+golangci-lint run     # the linters CI runs
+```
+
+Go 1.26.11+ (the `go` command fetches it automatically). No cgo, so everything cross-compiles.
 
 ## Repo layout
 
 | Path | What |
 |---|---|
-| `core/` | Platform-independent brain: state, failover, engine. Also targeted by the Android app via gomobile. |
+| `core/` | Platform-independent brain: desired state, failover, engine (gomobile-ready for Android TV) |
+| `slides/` | The `doxacast.slides/v1` feed format, validation and JSON Schema |
+| `connectors/` | Content connectors, the registry they plug into, and the conformance kit |
 | `internal/server/` | Control plane: API, SQLite store, embedded admin console |
-| `internal/agent/` | Linux implementations: mpv, probes, slideshow, metrics |
-| `cmd/` | `doxacast-server` and `doxacast-agent` binaries |
+| `internal/agent/` | Linux screen agent: mpv, probes, slideshow, metrics |
+| `cmd/` | `doxacast-server`, `doxacast-agent`, `doxacast-connector` |
 | `deploy/server/` | Docker Compose: server, mediamtx relay, multicast, Vimeo, rclone |
 | `deploy/agent/` | systemd unit, install script, example config |
-| `docs/` | Architecture, network (multicast/IGMP, long runs), hardware, OBS |
+| `examples/` | A sidecar connector in standard-library Python |
+| `docs/` | Architecture, connectors, network, hardware, OBS |
 
 ## Docs
 
 - [Architecture](docs/architecture.md)
+- [Connectors and the slide feed](docs/connectors.md)
 - [Network: multicast, IGMP, long cable runs](docs/network.md)
 - [Hardware: Pi models, power, composite, Android TV](docs/hardware.md)
 - [OBS setup](docs/obs.md)
+- [Roadmap](ROADMAP.md)
+
+## Security
+
+Every PR runs tests with the race detector, golangci-lint (including gosec),
+CodeQL, govulncheck and dependency review. Actions and container images are
+pinned by hash, the parsers are fuzzed nightly, and Dependabot keeps it all
+current.
+
+Found a vulnerability? **Please report it privately.** See [SECURITY.md](SECURITY.md).
+
+## Contributing
+
+Issues and PRs are welcome, especially from other churches. Please read
+[CONTRIBUTING.md](CONTRIBUTING.md) (short version: open an issue first, sign
+off your commits with `git commit -s`, and never commit real member data).
 
 ## License
 
