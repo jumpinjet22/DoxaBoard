@@ -21,6 +21,7 @@ import (
 
 	"github.com/jumpinjet22/doxaboard/core"
 	"github.com/jumpinjet22/doxaboard/internal/content"
+	"github.com/jumpinjet22/doxaboard/internal/logsafe"
 )
 
 //go:embed web
@@ -185,7 +186,7 @@ func (s *Server) enroll(w http.ResponseWriter, r *http.Request) {
 		s.fail(w, err)
 		return
 	}
-	s.log.Info("device enrolled", "id", d.ID, "hostname", host, "platform", req.Platform)
+	s.log.Info("device enrolled", "id", d.ID, "hostname", logsafe.Clean(host), "platform", logsafe.Clean(req.Platform))
 	writeJSON(w, http.StatusCreated, core.EnrollResponse{DeviceID: d.ID, DeviceToken: token})
 }
 
@@ -546,7 +547,7 @@ func (s *Server) fail(w http.ResponseWriter, err error) {
 		httpError(w, http.StatusNotFound, err.Error())
 		return
 	}
-	s.log.Error("request failed", "err", err)
+	s.log.Error("request failed", "err", logsafe.Clean(err.Error()))
 	httpError(w, http.StatusInternalServerError, "internal error")
 }
 
@@ -564,7 +565,7 @@ func logRequests(log *slog.Logger, h http.Handler) http.Handler {
 		h.ServeHTTP(rec, r)
 		// Heartbeats and state polls are noisy; only log them when they fail.
 		if rec.code >= 400 || !strings.HasPrefix(r.URL.Path, "/api/v1/device/") {
-			log.Debug("http", "method", r.Method, "path", r.URL.Path, "status", rec.code, "dur", time.Since(start))
+			log.Debug("http", "method", logsafe.Clean(r.Method), "path", logsafe.Clean(r.URL.Path), "status", rec.code, "dur", time.Since(start))
 		}
 	})
 }
