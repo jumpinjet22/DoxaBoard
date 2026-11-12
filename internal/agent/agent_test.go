@@ -115,11 +115,7 @@ func TestSlideshowSyncAndOfflineCache(t *testing.T) {
 		if r.URL.Path == "/api/v1/photos/lobby/manifest" {
 			m := manifest{Album: "lobby"}
 			for name, body := range photos {
-				m.Photos = append(m.Photos, struct {
-					Name string `json:"name"`
-					URL  string `json:"url"`
-					Size int64  `json:"size"`
-				}{name, "/api/v1/photos/lobby/files/" + name, int64(len(body))})
+				m.Photos = append(m.Photos, manifestPhoto{Name: name, URL: "/api/v1/photos/lobby/files/" + name, Size: int64(len(body))})
 			}
 			json.NewEncoder(w).Encode(m)
 			return
@@ -156,6 +152,72 @@ func TestSlideshowSyncAndOfflineCache(t *testing.T) {
 	files, err = s.sync(context.Background(), spec)
 	if err == nil || len(files) != 2 {
 		t.Fatalf("offline: want cached files and an error, got %v, %v", files, err)
+	}
+}
+
+// Slides appear at starts_at and drop off at expires_at using only what is
+// on disk, so it still happens when the server can't be reached.
+func TestSlideshowHonorsStartAndExpiry(t *testing.T) {
+	t0 := time.Date(2026, 11, 15, 12, 0, 0, 0, time.UTC)
+	at := func(h int) *time.Time { v := t0.Add(time.Duration(h) * time.Hour); return &v }
+	up := true
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !up {
+			http.Error(w, "down", http.StatusServiceUnavailable)
+			return
+		}
+		if strings.HasSuffix(r.URL.Path, "/manifest") {
+			if r.URL.Query().Get("schedule") != "1" {
+				t.Errorf("agent should ask for upcoming slides, got %q", r.URL.RawQuery)
+			}
+			json.NewEncoder(w).Encode(manifest{Album: "slideshow", Photos: []manifestPhoto{
+				{Name: "always.jpg", URL: "/f/always.jpg", Size: 1},
+				{Name: "ends.jpg", URL: "/f/ends.jpg", Size: 1, ExpiresAt: at(2)},
+				{Name: "later.jpg", URL: "/f/later.jpg", Size: 1, StartsAt: at(1), ExpiresAt: at(5)},
+			}})
+			return
+		}
+		w.Write([]byte("x"))
+	}))
+	defer srv.Close()
+
+	now := t0
+	s := &Slideshow{ServerURL: srv.URL, DataDir: t.TempDir(), Now: func() time.Time { return now }}
+	spec := core.SlideshowSpec{ManifestURL: "/api/v1/device/slideshow/manifest"}
+	names := func(files []string) string {
+		var out []string
+		for _, f := range files {
+			out = append(out, filepath.Base(f))
+		}
+		return strings.Join(out, ",")
+	}
+
+	files, err := s.sync(context.Background(), spec)
+	if err != nil || names(files) != "always.jpg,ends.jpg" {
+		t.Fatalf("at noon: got %q, %v", names(files), err)
+	}
+	dir, _ := s.specDir(spec)
+	if _, err := os.Stat(filepath.Join(dir, "later.jpg")); err != nil {
+		t.Fatalf("upcoming slide should be cached ahead of time: %v", err)
+	}
+	if _, next := activeFiles(dir, now); !next.Equal(*at(1)) {
+		t.Fatalf("next change: got %v, want %v", next, *at(1))
+	}
+
+	// The server goes away; the clock keeps moving.
+	up = false
+	for _, c := range []struct {
+		hours int
+		want  string
+	}{{1, "always.jpg,ends.jpg,later.jpg"}, {2, "always.jpg,later.jpg"}, {5, "always.jpg"}} {
+		now = t0.Add(time.Duration(c.hours) * time.Hour)
+		files, err := s.sync(context.Background(), spec)
+		if err == nil || names(files) != c.want {
+			t.Fatalf("offline at +%dh: got %q, %v; want %q", c.hours, names(files), err, c.want)
+		}
+	}
+	if _, next := activeFiles(dir, now); !next.IsZero() {
+		t.Fatalf("nothing left to change, got %v", next)
 	}
 }
 

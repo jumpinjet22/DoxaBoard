@@ -383,6 +383,10 @@ func (s *Server) deviceSlideshow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	now := time.Now()
+	// Agents that apply start and expiry times themselves ask for upcoming
+	// slides too, so they can cache them ahead of time. Older agents only
+	// get what is showing right now.
+	upcoming := r.URL.Query().Get("schedule") == "1"
 	if s.contentEnabled() {
 		for _, id := range p.SourceIDs {
 			cached, err := s.cfg.Content.Slides(id)
@@ -391,10 +395,12 @@ func (s *Server) deviceSlideshow(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			for _, c := range cached {
-				if !c.Active(now) {
+				expired := c.ExpiresAt != nil && !now.Before(*c.ExpiresAt)
+				if expired || (!upcoming && !c.Active(now)) {
 					continue
 				}
-				m.Photos = append(m.Photos, Photo{Name: id + "-" + c.File, URL: contentURL(id, c.File), Size: c.Size})
+				m.Photos = append(m.Photos, Photo{Name: id + "-" + c.File, URL: contentURL(id, c.File), Size: c.Size,
+					StartsAt: c.StartsAt, ExpiresAt: c.ExpiresAt})
 			}
 		}
 	}

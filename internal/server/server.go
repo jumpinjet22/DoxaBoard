@@ -20,9 +20,11 @@ import (
 	"time"
 
 	"github.com/jumpinjet22/doxaboard/core"
+	"github.com/jumpinjet22/doxaboard/internal/cloud"
 	"github.com/jumpinjet22/doxaboard/internal/content"
 	"github.com/jumpinjet22/doxaboard/internal/live"
 	"github.com/jumpinjet22/doxaboard/internal/logsafe"
+	"github.com/jumpinjet22/doxaboard/internal/theme"
 )
 
 //go:embed web
@@ -47,6 +49,11 @@ type Config struct {
 	RefreshEvery time.Duration
 	// Live controls the public broadcast; nil disables the live API.
 	Live *live.Controller
+	// Cloud connects cloud drives and mirrors their folders into albums;
+	// nil disables it.
+	Cloud *cloud.Manager
+	// Theme is the instance's branding; nil is the built-in look.
+	Theme *theme.Theme
 	// LiveToken, if set, may start/stop the broadcast and read its status,
 	// and nothing else (for Stream Decks, Companion, shortcuts).
 	LiveToken string
@@ -106,6 +113,17 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET "+slideshowManifestPath, s.device(s.deviceSlideshow))
 	mux.HandleFunc("GET /api/v1/content/{source}/files/{name}", s.deviceOrAdmin(s.contentFile))
 
+	// Cloud drives: connect accounts and mirror folders into albums.
+	mux.HandleFunc("GET /api/v1/admin/cloud", s.admin(s.getCloud))
+	mux.HandleFunc("POST /api/v1/admin/cloud/connect", s.admin(s.cloudConnect))
+	mux.HandleFunc("POST /api/v1/admin/cloud/connect/finish", s.admin(s.cloudFinish))
+	mux.HandleFunc("DELETE /api/v1/admin/cloud/connect", s.admin(s.cloudCancel))
+	mux.HandleFunc("DELETE /api/v1/admin/cloud/drives/{name}", s.admin(s.cloudRemoveDrive))
+	mux.HandleFunc("GET /api/v1/admin/cloud/drives/{name}/folders", s.admin(s.cloudBrowse))
+	mux.HandleFunc("POST /api/v1/admin/cloud/folders", s.admin(s.cloudAddFolder))
+	mux.HandleFunc("DELETE /api/v1/admin/cloud/folders/{id}", s.admin(s.cloudRemoveFolder))
+	mux.HandleFunc("POST /api/v1/admin/cloud/folders/{id}/sync", s.admin(s.cloudSyncFolder))
+
 	// Live broadcast: setup (admin) and control (admin or live token).
 	mux.HandleFunc("GET /api/v1/admin/broadcasts", s.admin(s.listBroadcasts))
 	mux.HandleFunc("POST /api/v1/admin/broadcasts", s.admin(s.saveBroadcast))
@@ -117,6 +135,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v1/live/status.txt", s.liveAuth(s.liveStatusText))
 	mux.HandleFunc("POST /api/v1/live/start", s.liveAuth(s.liveStart))
 	mux.HandleFunc("POST /api/v1/live/stop", s.liveAuth(s.liveStop))
+
+	// Branding. Public, like the console's own stylesheet: the sign-in page
+	// uses it, and it holds nothing but colors, fonts, a name and a logo.
+	mux.HandleFunc("GET /theme.css", s.themeCSS)
+	mux.HandleFunc("GET /theme/{file...}", s.themeAsset)
+	mux.HandleFunc("GET /api/v1/theme", s.themeInfo)
 
 	// Admin console (static, talks to the admin API).
 	sub, _ := fs.Sub(webFS, "web")
@@ -291,6 +315,11 @@ type Photo struct {
 	URL     string    `json:"url"`
 	Size    int64     `json:"size"`
 	ModTime time.Time `json:"mod_time"`
+	// StartsAt and ExpiresAt bound when a connector slide shows. The agent
+	// applies them itself, so a slide appears and drops off on time even
+	// when the screen can't reach the server.
+	StartsAt  *time.Time `json:"starts_at,omitempty"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
 }
 
 var photoExts = map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true, ".gif": true}

@@ -7,14 +7,16 @@ who want to **use** one, **write** one, or **get one listed**.
 ## Using a connector
 
 In the admin console, open **Content → Add source**, pick a type (RSS / Atom,
-JSON feed, Folder...) and fill in its settings. The server fetches it right
+JSON feed, Folder, Rock RMS...) and fill in its settings. The server fetches it right
 away and then every 10 minutes; **Preview** shows the slides it made, and
 **Refresh now** fetches immediately. Then tick the source in a **profile**,
 and screens using that profile show its slides whenever nothing is live.
 
 - Slides with an image show the image (resized to 1080p on the server).
 - Slides with only text are rendered as a clean text slide.
-- Start and expire dates are respected; expired slides drop off on their own.
+- Start and expire dates are respected. Screens get each slide's dates ahead
+  of time and add or drop it at that moment by themselves, even if they can't
+  reach the server just then.
 - API keys and tokens are encrypted at rest and never shown again after saving.
 - If a fetch fails, screens keep the last good slides and the console shows the error.
 

@@ -10,6 +10,11 @@ let connectors = [];
 let contentSources = [];
 let editingSource = null;
 let editing = null;
+let scheduleDirty = false;
+let scheduleZone = "";
+let calAnchor = null; // UTC-midnight Date the schedule calendar is showing; null = today
+let calView = "month";
+try { calView = localStorage.getItem("doxaboard.calView") || "month"; } catch (_) {}
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -42,15 +47,62 @@ async function api(method, path, body) {
   return data;
 }
 
+// ---- branding ----
+
+// An instance theme can rename the console and add a logo; colors and
+// fonts arrive through theme.css.
+fetch("/api/v1/theme").then((r) => (r.ok ? r.json() : {})).then((t) => {
+  // An instance's name and logo take the header; DoxaBoard's own mark
+  // stays on the sign-in page, the footer and the browser tab.
+  if (t.name) {
+    $("#brand-name").textContent = t.name;
+    $("#login-org").textContent = t.name;
+    $("#login-org").hidden = false;
+    document.title = t.name + " · DoxaBoard";
+  }
+  if (t.logo) {
+    for (const id of ["#brand-logo", "#login-logo"]) { $(id).src = t.logo; $(id).hidden = false; }
+    $("#brand-mark").style.display = "none";
+    $("#login-mark").style.display = "none";
+  }
+}).catch(() => {});
+
+// ---- appearance ----
+
+// Auto follows the system's light/dark setting; Light and Dark force one.
+const MODE_KEY = "doxaboard.mode";
+function setMode(mode) {
+  if (mode === "auto") delete document.documentElement.dataset.mode;
+  else document.documentElement.dataset.mode = mode;
+  try { mode === "auto" ? localStorage.removeItem(MODE_KEY) : localStorage.setItem(MODE_KEY, mode); } catch (_) {}
+  const label = mode === "auto" ? "Appearance: follows your system setting. Click for light."
+    : `Appearance: always ${mode}. Click for ${mode === "light" ? "dark" : "automatic"}.`;
+  $("#mode").dataset.mode = mode; // picks the icon
+  $("#mode").title = label;
+  $("#mode").setAttribute("aria-label", label);
+}
+$("#mode").addEventListener("click", () => {
+  const order = ["auto", "light", "dark"];
+  setMode(order[(order.indexOf(document.documentElement.dataset.mode || "auto") + 1) % 3]);
+});
+setMode(document.documentElement.dataset.mode || "auto");
+
 // ---- navigation ----
 
 function showTab(name) {
-  for (const s of ["login", "live", "devices", "profiles", "content"]) $("#" + s).hidden = s !== name;
+  // Leaving the schedule with unsaved edits would silently drop them.
+  if (scheduleDirty && !$("#schedule").hidden && name !== "schedule") {
+    if (!confirm("Discard your unsaved schedule changes?")) return;
+    setScheduleDirty(false);
+  }
+  for (const s of ["login", "live", "schedule", "devices", "profiles", "content"]) $("#" + s).hidden = s !== name;
+  document.body.classList.toggle("signed-out", name === "login");
   document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
   if (name === "devices") loadDevices();
   if (name === "profiles") loadProfiles();
   if (name === "content") loadContent();
   if (name === "live") loadLive();
+  if (name === "schedule") loadSchedule();
 }
 
 function showLogin() {
@@ -297,7 +349,151 @@ async function togglePreview(card, src) {
   }
 }
 
+// ---- cloud folders ----
+
+let cloud = { available: false, providers: [], drives: [], folders: [] };
+let cloudPick = { drive: null, path: [] };
+let cloudTimer = null;
+
+function cloudFolderStatus(f) {
+  if (f.syncing) return h("div", { class: "status-line" }, h("span", { class: "dot warn" }), "Syncing now…");
+  if (f.last_error) return h("div", { class: "status-line bad" }, h("span", { class: "dot bad" }), f.last_error);
+  if (!f.last_sync || f.last_sync.startsWith("0001")) return h("div", { class: "status-line" }, "Waiting for the first sync");
+  return h("div", { class: "status-line" }, h("span", { class: "dot ok" }), "In step · checked " + ago(f.last_sync));
+}
+
+async function loadCloud() {
+  clearTimeout(cloudTimer);
+  try { cloud = await api("GET", "/api/v1/admin/cloud"); }
+  catch (err) { cloud = { available: false, problem: err.message, providers: [], drives: [], folders: [] }; }
+  $("#cloud-problem").hidden = !cloud.problem;
+  $("#cloud-problem").textContent = cloud.problem || "";
+  $("#new-cloud").disabled = !cloud.available;
+  const title = (name) => { const d = cloud.drives.find((x) => x.name === name); return d ? d.title : name; };
+  $("#cloud-list").replaceChildren(...(cloud.folders.length ? cloud.folders.map((f) => h("div", { class: "card" },
+    h("div", {},
+      h("strong", {}, "Album: " + f.album),
+      h("div", { class: "meta" }, `${title(f.drive)} · ${f.path ? "/" + f.path : "top folder"}`),
+      cloudFolderStatus(f)),
+    h("div", { class: "actions-inline" },
+      h("button", { class: "secondary", disabled: f.syncing || !cloud.available, onclick: async () => {
+        await api("POST", "/api/v1/admin/cloud/folders/" + encodeURIComponent(f.id) + "/sync").catch((e) => alert(e.message));
+        setTimeout(loadCloud, 600);
+      } }, "Sync now"),
+      h("button", { class: "danger", onclick: async () => {
+        if (!confirm(`Stop syncing the album "${f.album}"? The photos already in the album stay.`)) return;
+        await api("DELETE", "/api/v1/admin/cloud/folders/" + encodeURIComponent(f.id)).catch((e) => alert(e.message));
+        loadCloud();
+      } }, "Remove"))))
+    : [h("p", { class: "muted" }, cloud.available ? "No cloud folders yet." : "")]));
+  $("#cloud-drives").replaceChildren(...(cloud.drives.length ? [
+    "Signed-in accounts: ",
+    ...cloud.drives.flatMap((d, i) => [i ? " · " : "", `${d.title} (${d.name}) `,
+      h("button", { class: "link", title: "Sign out of this account", onclick: async () => {
+        if (!confirm(`Disconnect ${d.title} (${d.name})?`)) return;
+        await api("DELETE", "/api/v1/admin/cloud/drives/" + encodeURIComponent(d.name)).catch((e) => alert(e.message));
+        loadCloud();
+      } }, "disconnect")]),
+  ] : []));
+  // Keep the status fresh while something is syncing.
+  if (!$("#content").hidden && cloud.folders.some((f) => f.syncing)) cloudTimer = setTimeout(loadCloud, 3000);
+}
+
+function cloudStep(step) {
+  for (const s of ["drive", "signin", "folder"]) $("#cloud-step-" + s).hidden = s !== step;
+  $("#cloud-save").hidden = step !== "folder";
+  $("#cloud-back").hidden = step === "drive";
+  $("#cloud-error").textContent = "";
+}
+
+function cloudChooseDrive() {
+  cloudStep("drive");
+  $("#cloud-choices").replaceChildren(
+    ...cloud.drives.map((d) => h("button", { type: "button", onclick: () => cloudBrowse(d.name, []) },
+      d.title, h("small", {}, "Already signed in · " + d.name))),
+    ...cloud.providers.map((p) => h("button", { type: "button", onclick: () => cloudSignIn(p.type) },
+      (cloud.drives.some((d) => d.type === p.type) ? "Another " : "") + p.title, h("small", {}, "Sign in from this browser"))));
+}
+
+async function cloudSignIn(type) {
+  $("#cloud-error").textContent = "Starting the sign-in…";
+  try {
+    const s = await api("POST", "/api/v1/admin/cloud/connect", { type });
+    cloudStep("signin");
+    $("#cloud-auth-link").href = s.auth_url;
+    $("#cloud-paste").value = "";
+  } catch (err) {
+    $("#cloud-error").textContent = err.message;
+  }
+}
+
+async function cloudBrowse(drive, path) {
+  cloudPick = { drive, path };
+  cloudStep("folder");
+  $("#cloud-crumbs").replaceChildren(
+    h("button", { type: "button", onclick: () => cloudBrowse(drive, []) }, "Top"),
+    ...path.flatMap((name, i) => [h("span", {}, "/"), h("button", { type: "button", onclick: () => cloudBrowse(drive, path.slice(0, i + 1)) }, name)]));
+  if (path.length && !$("#cloud-album").dataset.typed) $("#cloud-album").value = path[path.length - 1].replace(/[^A-Za-z0-9 _-]/g, " ").trim().slice(0, 64);
+  const list = $("#cloud-folders");
+  list.replaceChildren(h("p", { class: "muted" }, "Loading…"));
+  try {
+    const res = await api("GET", `/api/v1/admin/cloud/drives/${encodeURIComponent(drive)}/folders?path=${encodeURIComponent(path.join("/"))}`);
+    if (cloudPick.drive !== drive || cloudPick.path !== path) return; // a newer click won
+    list.replaceChildren(...(res.folders.length
+      ? res.folders.map((name) => h("button", { type: "button", onclick: () => cloudBrowse(drive, [...path, name]) }, "📁 " + name))
+      : [h("p", { class: "muted" }, "No folders inside this one.")]));
+  } catch (err) {
+    list.replaceChildren(h("p", { class: "error" }, err.message));
+  }
+}
+
+$("#new-cloud").addEventListener("click", () => {
+  $("#cloud-album").value = "";
+  delete $("#cloud-album").dataset.typed;
+  cloudChooseDrive();
+  $("#cloud-dialog").showModal();
+});
+$("#cloud-album").addEventListener("input", (e) => { e.target.dataset.typed = "1"; });
+$("#cloud-back").addEventListener("click", async () => {
+  if (!$("#cloud-step-signin").hidden) await api("DELETE", "/api/v1/admin/cloud/connect").catch(() => {});
+  cloudChooseDrive();
+});
+async function closeCloudDialog() {
+  if (!$("#cloud-step-signin").hidden) await api("DELETE", "/api/v1/admin/cloud/connect").catch(() => {});
+  $("#cloud-dialog").close();
+  loadCloud();
+}
+$("#cancel-cloud").addEventListener("click", closeCloudDialog);
+$("#cloud-dialog").addEventListener("cancel", (e) => { e.preventDefault(); closeCloudDialog(); });
+$("#cloud-form").addEventListener("submit", (e) => e.preventDefault());
+
+$("#cloud-finish").addEventListener("click", async () => {
+  const btn = $("#cloud-finish");
+  btn.disabled = true;
+  $("#cloud-error").textContent = "Finishing the sign-in…";
+  try {
+    const drive = await api("POST", "/api/v1/admin/cloud/connect/finish", { url: $("#cloud-paste").value });
+    cloud.drives.push(drive);
+    await cloudBrowse(drive.name, []);
+  } catch (err) {
+    $("#cloud-error").textContent = err.message;
+  }
+  btn.disabled = false;
+});
+
+$("#cloud-save").addEventListener("click", async () => {
+  try {
+    await api("POST", "/api/v1/admin/cloud/folders", { drive: cloudPick.drive, path: cloudPick.path.join("/"), album: $("#cloud-album").value });
+    $("#cloud-dialog").close();
+    loadCloud();
+    setTimeout(loadCloud, 2500);
+  } catch (err) {
+    $("#cloud-error").textContent = err.message;
+  }
+});
+
 async function loadContent() {
+  loadCloud();
   [connectors, contentSources] = await Promise.all([
     api("GET", "/api/v1/admin/connectors"),
     api("GET", "/api/v1/admin/sources"),
@@ -462,7 +658,7 @@ async function renderLiveStatus() {
 }
 
 async function loadLive() {
-  [broadcasts, schedule] = await Promise.all([api("GET", "/api/v1/admin/broadcasts"), api("GET", "/api/v1/admin/live/schedule")]);
+  broadcasts = await api("GET", "/api/v1/admin/broadcasts");
   renderLiveStatus();
   $("#broadcast-list").replaceChildren(...(broadcasts.length ? broadcasts.map((b) => h("div", { class: "card" },
     h("div", {}, h("strong", {}, b.name),
@@ -470,23 +666,64 @@ async function loadLive() {
       h("div", { class: "meta" }, "ID for buttons: ", h("code", {}, b.id))),
     h("button", { class: "secondary", onclick: () => openBroadcast(b) }, "Edit")))
     : [h("p", { class: "muted" }, "No broadcasts yet.")]));
-  $("#slot-rows").replaceChildren(...schedule.slots.map(slotRow));
-  $("#special-rows").replaceChildren(...schedule.specials.map(specialRow));
-  $("#schedule-msg").textContent = "";
+}
+
+// ---- schedule ----
+
+const hmToMin = (s) => { const m = /^(\d\d):(\d\d)$/.exec(s || ""); return m ? Number(m[1]) * 60 + Number(m[2]) : null; };
+const pad2 = (n) => String(n).padStart(2, "0");
+const ymd = (d) => `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+
+// "08:15" -> "8:15 AM" (or 24-hour, whatever the browser's locale uses).
+function fmtHM(s) {
+  const min = hmToMin(s);
+  if (min == null) return s;
+  return new Date(Date.UTC(2000, 0, 1, Math.floor(min / 60), min % 60))
+    .toLocaleTimeString([], { hour: "numeric", minute: "2-digit", timeZone: "UTC" });
+}
+
+// The schedule is wall-clock time in the server's zone, so "today" and "now"
+// come from that zone, not from wherever this browser happens to be.
+function nowInZone(zone) {
+  const opts = { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" };
+  let parts;
+  try { parts = new Intl.DateTimeFormat("en-CA", { ...opts, timeZone: zone || undefined }).formatToParts(new Date()); }
+  catch (_) { parts = new Intl.DateTimeFormat("en-CA", opts).formatToParts(new Date()); }
+  const p = Object.fromEntries(parts.map((x) => [x.type, x.value]));
+  return { date: `${p.year}-${p.month}-${p.day}`, minutes: Number(p.hour) * 60 + Number(p.minute) };
+}
+
+function setScheduleDirty(dirty, msg) {
+  scheduleDirty = dirty;
+  $("#save-schedule").disabled = !dirty;
+  $("#discard-schedule").disabled = !dirty;
+  $("#schedule-save").classList.toggle("dirty", dirty);
+  $("#schedule-msg").textContent = msg != null ? msg : dirty ? "You have unsaved changes." : "";
+}
+
+function scheduleChanged() {
+  setScheduleDirty(true);
+  renderSchedulePreview();
 }
 
 function broadcastSelect(selected) {
+  const known = broadcasts.some((b) => b.id === selected);
   return h("select", { name: "broadcast", "aria-label": "Broadcast" },
+    selected && !known ? h("option", { value: selected, selected: true }, "(deleted broadcast)") : null,
     ...broadcasts.map((b) => h("option", { value: b.id, selected: b.id === selected }, b.name)));
+}
+
+function removeButton(row) {
+  return h("button", { type: "button", class: "secondary", title: "Remove", "aria-label": "Remove", onclick: () => { row.remove(); scheduleChanged(); } }, "×");
 }
 
 function slotRow(sl = {}) {
   const row = h("div", { class: "sched-row", "data-id": sl.id || "" },
     h("select", { name: "weekday", "aria-label": "Day" }, ...DAYS.map((d, i) => h("option", { value: i, selected: (sl.weekday ?? 0) === i }, d))),
-    h("input", { name: "start", type: "time", value: sl.start || "", required: true, "aria-label": "Start" }),
-    h("input", { name: "end", type: "time", value: sl.end || "", required: true, "aria-label": "End" }),
-    broadcastSelect(sl.broadcast_id),
-    h("button", { type: "button", class: "secondary", title: "Remove", onclick: () => row.remove() }, "×"));
+    h("input", { name: "start", type: "time", value: sl.start || "", required: true, "aria-label": "Starts" }),
+    h("input", { name: "end", type: "time", value: sl.end || "", required: true, "aria-label": "Ends" }),
+    broadcastSelect(sl.broadcast_id));
+  row.append(removeButton(row));
   return row;
 }
 
@@ -494,40 +731,322 @@ function specialRow(sp = {}) {
   const row = h("div", { class: "sched-row special", "data-id": sp.id || "" },
     h("input", { name: "date", type: "date", value: sp.date || "", required: true, "aria-label": "Date" }),
     h("input", { name: "name", value: sp.name || "", placeholder: "Combined service", "aria-label": "Name" }),
-    h("input", { name: "start", type: "time", value: sp.start || "", required: true, "aria-label": "Start" }),
-    h("input", { name: "end", type: "time", value: sp.end || "", required: true, "aria-label": "End" }),
-    broadcastSelect(sp.broadcast_id),
-    h("button", { type: "button", class: "secondary", title: "Remove", onclick: () => row.remove() }, "×"));
+    h("input", { name: "start", type: "time", value: sp.start || "", required: true, "aria-label": "Starts" }),
+    h("input", { name: "end", type: "time", value: sp.end || "", required: true, "aria-label": "Ends" }),
+    broadcastSelect(sp.broadcast_id));
+  row.append(removeButton(row));
   return row;
 }
 
+// Reads the editor as it stands, saved or not.
+function readSchedule() {
+  const val = (r, n) => r.querySelector(`[name=${n}]`).value;
+  return {
+    slots: [...document.querySelectorAll("#slot-rows .sched-row")].map((r) => ({
+      row: r, id: r.dataset.id, weekday: Number(val(r, "weekday")), start: val(r, "start"), end: val(r, "end"), broadcast_id: val(r, "broadcast"),
+    })),
+    specials: [...document.querySelectorAll("#special-rows .sched-row")].map((r) => ({
+      row: r, id: r.dataset.id, date: val(r, "date"), name: val(r, "name").trim(), start: val(r, "start"), end: val(r, "end"), broadcast_id: val(r, "broadcast"),
+    })),
+  };
+}
+
+const windowOK = (e) => hmToMin(e.start) != null && hmToMin(e.end) != null && hmToMin(e.end) > hmToMin(e.start);
+const overlaps = (a, b) => hmToMin(a.start) < hmToMin(b.end) && hmToMin(b.start) < hmToMin(a.end);
+
+// Mirrors internal/live/schedule.go: on a date with special entries the
+// weekly schedule is ignored, and two windows covering the same moment make
+// Go live refuse rather than guess.
+function windowsOn(day, slots, specials) {
+  const date = ymd(day);
+  const todays = specials.filter((sp) => sp.date === date);
+  const weekly = slots.filter((sl) => sl.weekday === day.getUTCDay());
+  const wins = (todays.length ? todays : weekly).map((e) => ({ ...e, special: todays.length > 0 }));
+  wins.sort((x, y) => hmToMin(x.start) - hmToMin(y.start));
+  for (const w of wins) w.clash = wins.some((o) => o !== w && overlaps(w, o));
+  return { date, wins, replaced: todays.length ? weekly.length : 0 };
+}
+
+function renderSchedulePreview() {
+  const sched = readSchedule();
+  const now = nowInZone(scheduleZone);
+  const name = (id) => (broadcasts.find((b) => b.id === id) || {}).name || "(deleted broadcast)";
+  const problems = [];
+
+  for (const e of [...sched.slots, ...sched.specials]) {
+    const incomplete = !e.start || !e.end || (e.date !== undefined && !e.date);
+    const backwards = !incomplete && !windowOK(e);
+    e.row.classList.toggle("invalid", backwards);
+    e.row.classList.toggle("past", e.date !== undefined && !!e.date && e.date < now.date);
+    const what = e.date !== undefined ? (e.name || "A special date") : `A ${DAYS[e.weekday]} time`;
+    if (incomplete) problems.push(`${what} is missing its ${e.date !== undefined && !e.date ? "date" : "start or end time"}.`);
+    else if (backwards) problems.push(`${what} ends before it starts. Windows can't cross midnight.`);
+  }
+  $("#clear-past").hidden = !sched.specials.some((sp) => sp.date && sp.date < now.date);
+  $("#slot-empty").hidden = sched.slots.length > 0;
+  $("#special-empty").hidden = sched.specials.length > 0;
+  document.querySelectorAll("#schedule-editor .sched-head").forEach((el) => {
+    el.hidden = !el.nextElementSibling.children.length;
+  });
+
+  const slots = sched.slots.filter(windowOK);
+  const specials = sched.specials.filter((sp) => sp.date && windowOK(sp));
+  const [ty, tm, td] = now.date.split("-").map(Number);
+
+  // Overlaps anywhere in the next 8 weeks, not just the month on screen.
+  const clashDays = [];
+  for (let i = 0; i < 56; i++) {
+    const day = new Date(Date.UTC(ty, tm - 1, td + i));
+    if (windowsOn(day, slots, specials).wins.some((w) => w.clash)) clashDays.push(day);
+  }
+  if (clashDays.length) {
+    const first = clashDays[0].toLocaleDateString([], { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
+    problems.push(`Two windows overlap on ${first}${clashDays.length > 1 ? ` and ${clashDays.length - 1} more day${clashDays.length > 2 ? "s" : ""}` : ""}. While they overlap, Go live refuses to guess and you'll have to pick the broadcast by hand.`);
+  }
+  $("#schedule-problems").replaceChildren(...(problems.length
+    ? [h("div", { class: "notice" }, h("strong", {}, "Check these before you rely on the schedule"), h("ul", {}, ...problems.map((p) => h("li", {}, p))))]
+    : []));
+
+  const today = new Date(Date.UTC(ty, tm - 1, td));
+  const anchor = calAnchor || today;
+  const ctx = { slots, specials, now, name };
+  const longDate = { timeZone: "UTC", month: "long", day: "numeric", year: "numeric" };
+  document.querySelectorAll("#cal-views button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === calView)));
+  const cal = $("#schedule-cal");
+  cal.className = "calv-" + calView;
+  if (calView === "month") {
+    $("#cal-title").textContent = anchor.toLocaleDateString([], { month: "long", year: "numeric", timeZone: "UTC" });
+    cal.replaceChildren(...monthCells(anchor, ctx));
+  } else if (calView === "week") {
+    const start = addDays(anchor, -anchor.getUTCDay());
+    const days = [0, 1, 2, 3, 4, 5, 6].map((i) => addDays(start, i));
+    $("#cal-title").textContent = start.toLocaleDateString([], { timeZone: "UTC", month: "short", day: "numeric" }) +
+      " – " + days[6].toLocaleDateString([], { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" });
+    cal.replaceChildren(timeGrid(days, ctx));
+  } else {
+    $("#cal-title").textContent = anchor.toLocaleDateString([], { weekday: "long", ...longDate });
+    cal.replaceChildren(timeGrid([anchor], ctx));
+  }
+  $("#cal-hint").textContent = calView === "month"
+    ? "Shows what the Go live button will pick, including changes you haven't saved yet. Click a day to add a special date, or an entry to edit it."
+    : "Shows what the Go live button will pick, including changes you haven't saved yet. Click an empty time to add a special date there, or an entry to edit it.";
+}
+
+const addDays = (d, n) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + n));
+const minToHM = (min) => `${pad2(Math.floor(min / 60))}:${pad2(min % 60)}`;
+
+function winTitle(w, replaced, name) {
+  return `${fmtHM(w.start)} – ${fmtHM(w.end)} · ${w.special && w.name ? w.name + " → " : ""}${name(w.broadcast_id)}` +
+    (w.clash ? " · overlaps another window" : "") +
+    (w.special && replaced ? ` · replaces ${replaced} weekly time${replaced === 1 ? "" : "s"}` : "");
+}
+
+// Jump from a calendar entry to the row that defines it.
+function focusRow(row) {
+  row.scrollIntoView({ block: "center", behavior: "smooth" });
+  row.classList.add("flash");
+  setTimeout(() => row.classList.remove("flash"), 1500);
+  row.querySelector("[name=start]").focus({ preventScroll: true });
+}
+
+function showDay(day) {
+  calAnchor = day;
+  setCalView("day");
+}
+
+// Month grid, Sunday first, padded to whole weeks.
+function monthCells(anchor, { slots, specials, now, name }) {
+  const first = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1));
+  const lead = first.getUTCDay();
+  const daysInMonth = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0)).getUTCDate();
+  const out = DAYS.map((d) => h("div", { class: "cal-dow" }, d.slice(0, 3)));
+  for (let i = 0; i < Math.ceil((lead + daysInMonth) / 7) * 7; i++) {
+    const day = addDays(first, i - lead);
+    const { date, wins, replaced } = windowsOn(day, slots, specials);
+    const isToday = date === now.date;
+    const past = date < now.date;
+    const cls = ["cal-day"];
+    if (day.getUTCMonth() !== first.getUTCMonth()) cls.push("other");
+    if (past) cls.push("past");
+    if (isToday) cls.push("today");
+    const label = day.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+    out.push(h("div", { class: cls.join(" "), title: past ? "" : "Add a special date", onclick: () => { if (!past) addSpecial(date); } },
+      h("button", { type: "button", class: "cal-num", title: "Open this day", "aria-label": `${label}: open day view`,
+        onclick: (e) => { e.stopPropagation(); showDay(day); } }, day.getUTCDate()),
+      ...wins.map((w) => {
+        const live = isToday && hmToMin(w.start) <= now.minutes && now.minutes < hmToMin(w.end);
+        return h("button", {
+          type: "button",
+          class: "cal-chip" + (w.special ? " special" : "") + (w.clash ? " clash" : "") + (live ? " now" : ""),
+          title: winTitle(w, replaced, name),
+          onclick: (e) => { e.stopPropagation(); focusRow(w.row); },
+        }, h("b", {}, fmtHM(w.start)), " ", h("span", {}, w.special && w.name ? w.name : name(w.broadcast_id)));
+      })));
+  }
+  return out;
+}
+
+// Week and day views: hours down the side, one column per day.
+function timeGrid(days, { slots, specials, now, name }) {
+  const HOUR = 46; // px per hour
+  const cols = days.map((day) => ({ day, ...windowsOn(day, slots, specials) }));
+  const all = cols.flatMap((c) => c.wins);
+  // Show the working day by default, stretched to fit whatever is scheduled.
+  let lo = 7, hi = 21;
+  for (const w of all) {
+    lo = Math.min(lo, Math.floor(hmToMin(w.start) / 60));
+    hi = Math.max(hi, Math.ceil(hmToMin(w.end) / 60));
+  }
+  const px = (min) => (min - lo * 60) / 60 * HOUR;
+  const height = (hi - lo) * HOUR;
+
+  const grid = h("div", { class: "tg" + (days.length === 1 ? " single" : "") });
+  grid.style.gridTemplateColumns = `52px repeat(${days.length}, minmax(0, 1fr))`;
+  grid.style.setProperty("--hour", HOUR + "px");
+
+  grid.append(h("div", { class: "tg-corner" }));
+  for (const c of cols) {
+    const isToday = c.date === now.date;
+    const label = c.day.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+    grid.append(h("button", {
+      type: "button", class: "tg-head" + (isToday ? " today" : "") + (c.date < now.date ? " past" : ""),
+      title: days.length > 1 ? "Open this day" : "", "aria-label": label, disabled: days.length === 1,
+      onclick: () => showDay(c.day),
+    },
+      h("span", {}, c.day.toLocaleDateString([], { weekday: "short", timeZone: "UTC" })),
+      h("span", { class: "cal-num" }, c.day.getUTCDate()),
+      c.replaced ? h("small", {}, `Special date: replaces ${c.replaced} weekly time${c.replaced === 1 ? "" : "s"}`)
+        : c.wins.some((w) => w.special) ? h("small", {}, "Special date") : null));
+  }
+
+  const hours = h("div", { class: "tg-hours" });
+  hours.style.height = height + "px";
+  for (let hr = lo; hr <= hi; hr++) {
+    const lab = h("span", {}, fmtHM(minToHM((hr % 24) * 60)).replace(":00", ""));
+    lab.style.top = (hr - lo) * HOUR + "px";
+    hours.append(lab);
+  }
+  grid.append(hours);
+
+  for (const c of cols) {
+    const past = c.date < now.date;
+    const col = h("div", { class: "tg-col" + (past ? " past" : "") + (c.date === now.date ? " today" : ""), title: past ? "" : "Add a special date at this time" });
+    col.style.height = height + "px";
+    col.addEventListener("click", (e) => {
+      if (past) return;
+      const y = e.clientY - col.getBoundingClientRect().top;
+      const start = Math.min(22 * 60 + 30, Math.max(0, Math.floor((lo * 60 + y / HOUR * 60) / 30) * 30));
+      addSpecial(c.date, minToHM(start), minToHM(Math.min(start + 90, 23 * 60 + 59)));
+    });
+    for (const w of c.wins) {
+      const s = hmToMin(w.start), e = hmToMin(w.end);
+      const others = c.wins.filter((o) => overlaps(w, o));
+      const live = c.date === now.date && s <= now.minutes && now.minutes < e;
+      const block = h("button", {
+        type: "button",
+        class: "tg-block" + (w.special ? " special" : "") + (w.clash ? " clash" : "") + (live ? " now" : ""),
+        title: winTitle(w, c.replaced, name),
+        onclick: (ev) => { ev.stopPropagation(); focusRow(w.row); },
+      },
+        h("b", {}, `${fmtHM(w.start)} – ${fmtHM(w.end)}`),
+        h("span", {}, w.special && w.name ? w.name : name(w.broadcast_id)),
+        w.special && w.name ? h("span", { class: "sub" }, "→ " + name(w.broadcast_id)) : null,
+        w.clash ? h("span", { class: "sub" }, "Overlaps: Go live won't pick") : null);
+      block.style.top = px(s) + "px";
+      block.style.height = Math.max(22, px(e) - px(s) - 2) + "px";
+      block.style.left = `calc(${others.indexOf(w) / others.length * 100}% + 2px)`;
+      block.style.width = `calc(${100 / others.length}% - 4px)`;
+      col.append(block);
+    }
+    if (c.date === now.date && now.minutes >= lo * 60 && now.minutes <= hi * 60) {
+      const line = h("div", { class: "tg-now", title: "Now" });
+      line.style.top = px(now.minutes) + "px";
+      col.append(line);
+    }
+    grid.append(col);
+  }
+  return grid;
+}
+
+function addSpecial(date, start, end) {
+  const row = specialRow({ date, start, end });
+  $("#special-rows").append(row);
+  scheduleChanged();
+  row.scrollIntoView({ block: "center", behavior: "smooth" });
+  row.querySelector(date ? "[name=name]" : "[name=date]").focus({ preventScroll: true });
+}
+
+function setCalView(view) {
+  calView = view;
+  try { localStorage.setItem("doxaboard.calView", view); } catch (_) {}
+  renderSchedulePreview();
+}
+
+function moveCal(delta) {
+  const [y, m, d] = nowInZone(scheduleZone).date.split("-").map(Number);
+  const a = calAnchor || new Date(Date.UTC(y, m - 1, d));
+  calAnchor = calView === "month" ? new Date(Date.UTC(a.getUTCFullYear(), a.getUTCMonth() + delta, 1))
+    : addDays(a, calView === "week" ? 7 * delta : delta);
+  renderSchedulePreview();
+}
+
+function fillSchedule(sched) {
+  const slots = [...sched.slots].sort((a, b) => a.weekday - b.weekday || a.start.localeCompare(b.start));
+  const specials = [...sched.specials].sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));
+  $("#slot-rows").replaceChildren(...slots.map(slotRow));
+  $("#special-rows").replaceChildren(...specials.map(specialRow));
+  renderSchedulePreview();
+}
+
+async function loadSchedule() {
+  if (scheduleDirty) return; // coming back to the tab mid-edit: keep the edits
+  let st;
+  [broadcasts, schedule, st] = await Promise.all([
+    api("GET", "/api/v1/admin/broadcasts"), api("GET", "/api/v1/admin/live/schedule"), api("GET", "/api/v1/live/status")]);
+  scheduleZone = st.time_zone;
+  $("#schedule-tz").textContent = "Times are in " + st.time_zone;
+  $("#schedule-empty").hidden = broadcasts.length > 0;
+  $("#schedule-editor").hidden = !broadcasts.length;
+  setScheduleDirty(false);
+  fillSchedule(schedule);
+}
+
+$("#schedule-editor").addEventListener("input", (e) => { if (e.target.closest(".sched-row")) scheduleChanged(); });
+$("#schedule-to-live").addEventListener("click", () => showTab("live"));
+
 $("#add-slot").addEventListener("click", () => {
-  if (!broadcasts.length) { alert("Add a broadcast first."); return; }
-  $("#slot-rows").append(slotRow({ weekday: 0 }));
+  const row = slotRow({ weekday: 0 });
+  $("#slot-rows").append(row);
+  scheduleChanged();
+  row.querySelector("select").focus();
 });
-$("#add-special").addEventListener("click", () => {
-  if (!broadcasts.length) { alert("Add a broadcast first."); return; }
-  $("#special-rows").append(specialRow());
+$("#add-special").addEventListener("click", () => addSpecial(""));
+$("#cal-prev").addEventListener("click", () => moveCal(-1));
+$("#cal-next").addEventListener("click", () => moveCal(1));
+$("#cal-today").addEventListener("click", () => { calAnchor = null; renderSchedulePreview(); });
+document.querySelectorAll("#cal-views button").forEach((b) => b.addEventListener("click", () => setCalView(b.dataset.view)));
+$("#clear-past").addEventListener("click", () => {
+  document.querySelectorAll("#special-rows .sched-row.past").forEach((r) => r.remove());
+  scheduleChanged();
+});
+$("#discard-schedule").addEventListener("click", () => {
+  setScheduleDirty(false);
+  fillSchedule(schedule);
 });
 
 $("#save-schedule").addEventListener("click", async () => {
-  const val = (r, n) => r.querySelector(`[name=${n}]`).value;
-  const body = {
-    slots: [...document.querySelectorAll("#slot-rows .sched-row")].map((r) => ({
-      id: r.dataset.id, weekday: Number(val(r, "weekday")), start: val(r, "start"), end: val(r, "end"), broadcast_id: val(r, "broadcast"),
-    })),
-    specials: [...document.querySelectorAll("#special-rows .sched-row")].map((r) => ({
-      id: r.dataset.id, date: val(r, "date"), name: val(r, "name"), start: val(r, "start"), end: val(r, "end"), broadcast_id: val(r, "broadcast"),
-    })),
-  };
+  const sched = readSchedule();
+  const strip = ({ row, ...rest }) => rest;
   try {
-    schedule = await api("PUT", "/api/v1/admin/live/schedule", body);
-    $("#schedule-msg").textContent = "Schedule saved.";
-    renderLiveStatus();
+    schedule = await api("PUT", "/api/v1/admin/live/schedule", { slots: sched.slots.map(strip), specials: sched.specials.map(strip) });
+    setScheduleDirty(false, "Schedule saved.");
+    fillSchedule(schedule);
   } catch (err) {
-    $("#schedule-msg").textContent = err.message;
+    setScheduleDirty(true, "Not saved: " + err.message);
   }
 });
+
+window.addEventListener("beforeunload", (e) => { if (scheduleDirty) e.preventDefault(); });
 
 function outputRow(o = {}) {
   const row = h("div", { class: "source-row", "data-id": o.id || "" },
