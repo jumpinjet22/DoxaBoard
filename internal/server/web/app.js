@@ -6,6 +6,9 @@ try { token = localStorage.getItem(TOKEN_KEY) || ""; } catch (_) {}
 
 let profiles = [];
 let albums = [];
+let connectors = [];
+let contentSources = [];
+let editingSource = null;
 let editing = null;
 
 const $ = (sel) => document.querySelector(sel);
@@ -42,10 +45,11 @@ async function api(method, path, body) {
 // ---- navigation ----
 
 function showTab(name) {
-  for (const s of ["login", "devices", "profiles"]) $("#" + s).hidden = s !== name;
+  for (const s of ["login", "devices", "profiles", "content"]) $("#" + s).hidden = s !== name;
   document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
   if (name === "devices") loadDevices();
   if (name === "profiles") loadProfiles();
+  if (name === "content") loadContent();
 }
 
 function showLogin() {
@@ -150,7 +154,9 @@ async function loadProfiles() {
     h("div", {},
       h("strong", {}, p.name),
       h("div", { class: "meta" },
-        `${(p.sources || []).length} source(s)` + (p.album ? ` · photos: ${p.album}` : " · no photo fallback"))),
+        `${(p.sources || []).length} live source(s)` +
+        ` · ${(p.source_ids || []).length} content source(s)` +
+        (p.album ? ` · photos: ${p.album}` : ""))),
     h("button", { class: "secondary", onclick: () => openProfile(p) }, "Edit")));
   $("#profile-list").replaceChildren(...(cards.length ? cards : [h("p", { class: "muted" }, "No profiles yet. Create one, then assign it to screens.")]));
 }
@@ -180,7 +186,17 @@ async function openProfile(p) {
   // Always refresh albums: the list may still be loading, or OneDrive may
   // have synced a new folder since the page loaded.
   try { albums = await api("GET", "/api/v1/admin/albums"); } catch (_) {}
+  try { contentSources = await api("GET", "/api/v1/admin/sources"); } catch (_) { contentSources = []; }
   editing = p || null;
+  const chosen = new Set((p && p.source_ids) || []);
+  $("#profile-content-sources").replaceChildren(
+    contentSources.length
+      ? h("div", { class: "check-list" },
+          h("div", { class: "muted" }, "Content sources"),
+          ...contentSources.map((src) => h("label", {},
+            h("input", { type: "checkbox", value: src.id, checked: chosen.has(src.id) }),
+            `${src.name} (${src.connector_title || src.connector})`)))
+      : h("p", { class: "muted" }, "No content sources yet. Add one in the Content tab."));
   const f = $("#profile-form");
   $("#profile-title").textContent = p ? "Edit profile" : "New profile";
   f.name.value = p ? p.name : "";
@@ -191,7 +207,8 @@ async function openProfile(p) {
     ...albums.map((a) => h("option", { value: a, selected: !!p && p.album === a }, a)));
   const srcs = p ? p.sources || [] : [
     { kind: "multicast", url: "udp://239.10.10.1:5000", priority: 10 },
-    { kind: "srt", url: "", priority: 20 },
+    // The relay normally runs on the same host as this console.
+    { kind: "srt", url: `srt://${location.hostname}:8890?streamid=read:live`, priority: 20 },
   ];
   $("#source-rows").replaceChildren(...srcs.map(sourceRow));
   $("#delete-profile").hidden = !p;
@@ -218,6 +235,7 @@ $("#profile-form").addEventListener("submit", async (e) => {
     album: f.album.value,
     interval_seconds: Number(f.interval.value) || 10,
     shuffle: f.shuffle.checked,
+    source_ids: [...document.querySelectorAll("#profile-content-sources input:checked")].map((c) => c.value),
     sources: [...document.querySelectorAll("#source-rows .source-row")].map((r, i) => ({
       id: r.dataset.id || "s" + (i + 1),
       name: r.dataset.name || "",
@@ -237,3 +255,151 @@ $("#profile-form").addEventListener("submit", async (e) => {
 });
 
 showTab(token ? "devices" : "login");
+
+// ---- content sources ----
+
+function statusLine(st) {
+  if (!st || !st.fetched_at || st.fetched_at.startsWith("0001")) return h("div", { class: "status-line" }, "Not fetched yet");
+  const when = ago(st.fetched_at);
+  if (st.ok) {
+    return h("div", { class: "status-line" },
+      h("span", { class: "dot ok" }), `${st.slides} slide(s) · updated ${when}` + (st.dropped ? ` · ${st.dropped} skipped` : ""));
+  }
+  return h("div", { class: "status-line bad" },
+    h("span", { class: "dot bad" }), `Last fetch failed ${when}: ${st.error}` + (st.slides ? ` (still showing ${st.slides} older slide(s))` : ""));
+}
+
+// Thumbnails need the admin token, which <img src> can't send, so fetch
+// them with it and show blobs.
+async function authedImage(url) {
+  const res = await fetch(url, { headers: { Authorization: "Bearer " + token } });
+  if (!res.ok) throw new Error(res.statusText);
+  return URL.createObjectURL(await res.blob());
+}
+
+async function togglePreview(card, src) {
+  const existing = card.querySelector(".thumbs");
+  if (existing) { existing.remove(); return; }
+  const grid = h("div", { class: "thumbs" }, h("span", { class: "muted" }, "Loading…"));
+  card.append(grid);
+  try {
+    const slides = await api("GET", "/api/v1/admin/sources/" + encodeURIComponent(src.id) + "/slides");
+    if (!slides.length) { grid.replaceChildren(h("span", { class: "muted" }, "No slides yet.")); return; }
+    grid.replaceChildren(...slides.map((sl) => {
+      const img = h("img", { alt: sl.title || sl.id, loading: "lazy" });
+      authedImage(sl.url).then((u) => { img.src = u; }).catch(() => {});
+      return h("figure", { class: sl.active ? "" : "inactive", title: sl.active ? "" : "Not showing now (scheduled or expired)" },
+        img, h("figcaption", {}, (sl.active ? "" : "⏸ ") + (sl.title || sl.id)));
+    }));
+  } catch (err) {
+    grid.replaceChildren(h("span", { class: "error" }, err.message));
+  }
+}
+
+async function loadContent() {
+  [connectors, contentSources] = await Promise.all([
+    api("GET", "/api/v1/admin/connectors"),
+    api("GET", "/api/v1/admin/sources"),
+  ]);
+  const cards = contentSources.map((src) => {
+    const card = h("div", { class: "card stack" });
+    card.append(h("div", { class: "card-head" },
+      h("div", {},
+        h("strong", {}, src.name),
+        h("div", { class: "meta" }, src.connector_title || src.connector),
+        statusLine(src.status)),
+      h("div", { class: "actions-inline" },
+        h("button", { class: "secondary", onclick: () => togglePreview(card, src) }, "Preview"),
+        h("button", {
+          class: "secondary",
+          onclick: async (e) => {
+            e.target.disabled = true;
+            e.target.textContent = "Refreshing…";
+            try { await api("POST", "/api/v1/admin/sources/" + encodeURIComponent(src.id) + "/refresh"); }
+            catch (err) { alert(err.message); }
+            loadContent();
+          },
+        }, "Refresh now"),
+        h("button", { class: "secondary", onclick: () => openSource(src) }, "Edit"))));
+    return card;
+  });
+  $("#content-list").replaceChildren(...(cards.length ? cards
+    : [h("p", { class: "muted" }, "No content sources yet. Add an RSS feed, a JSON feed or a photo folder.")]));
+}
+
+function fieldInput(field, src) {
+  const val = src ? (src.config[field.key] ?? "") : (field.default ?? "");
+  const isSet = src && src.secrets_set.includes(field.key);
+  let input;
+  switch (field.type) {
+    case "secret":
+      input = h("input", { name: field.key, type: "password", autocomplete: "new-password",
+        placeholder: isSet ? "Saved. Leave blank to keep it" : "", required: field.required && !isSet });
+      break;
+    case "bool":
+      input = h("input", { name: field.key, type: "checkbox", checked: val === "true" });
+      return h("label", { class: "inline" }, input, field.label,
+        field.help ? h("span", { class: "field-help" }, " " + field.help) : null);
+    case "number":
+      input = h("input", { name: field.key, type: "number", value: val, required: field.required });
+      break;
+    case "url":
+      input = h("input", { name: field.key, type: "url", value: val, required: field.required, placeholder: "https://" });
+      break;
+    default:
+      input = h("input", { name: field.key, value: val, required: field.required });
+  }
+  return h("label", {}, field.label + (field.required ? " *" : ""), input,
+    field.help ? h("div", { class: "field-help" }, field.help) : null);
+}
+
+function renderSourceFields(src) {
+  const conn = connectors.find((c) => c.name === $("#content-connector").value);
+  $("#content-connector-help").textContent = conn ? conn.description : "";
+  $("#content-fields").replaceChildren(...(conn ? conn.fields.map((f) => fieldInput(f, src)) : []));
+}
+
+async function openSource(src) {
+  if (!connectors.length) connectors = await api("GET", "/api/v1/admin/connectors");
+  editingSource = src || null;
+  const f = $("#content-form");
+  $("#content-title").textContent = src ? "Edit content source" : "Add content source";
+  f.name.value = src ? src.name : "";
+  const sel = $("#content-connector");
+  sel.replaceChildren(...connectors.map((c) => h("option", { value: c.name, selected: src && src.connector === c.name },
+    c.title + (c.status === "official" ? "" : ` (${c.status})`))));
+  sel.disabled = !!src; // a source's type can't change
+  renderSourceFields(src);
+  $("#delete-content").hidden = !src;
+  $("#content-error").textContent = "";
+  $("#content-dialog").showModal();
+}
+
+$("#content-connector").addEventListener("change", () => renderSourceFields(null));
+$("#new-content").addEventListener("click", () => openSource(null));
+$("#cancel-content").addEventListener("click", () => $("#content-dialog").close());
+
+$("#delete-content").addEventListener("click", async () => {
+  if (!editingSource || !confirm(`Delete ${editingSource.name}? Its slides disappear from every screen.`)) return;
+  await api("DELETE", "/api/v1/admin/sources/" + encodeURIComponent(editingSource.id));
+  $("#content-dialog").close();
+  loadContent();
+});
+
+$("#content-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const config = {};
+  for (const el of document.querySelectorAll("#content-fields input")) {
+    config[el.name] = el.type === "checkbox" ? String(el.checked) : el.value.trim();
+  }
+  const body = { name: e.target.name.value, connector: $("#content-connector").value, config };
+  try {
+    if (editingSource) await api("PUT", "/api/v1/admin/sources/" + encodeURIComponent(editingSource.id), body);
+    else await api("POST", "/api/v1/admin/sources", body);
+    $("#content-dialog").close();
+    loadContent();
+    setTimeout(() => { if (!$("#content").hidden) loadContent(); }, 4000); // first fetch runs in the background
+  } catch (err) {
+    $("#content-error").textContent = err.message;
+  }
+});

@@ -12,6 +12,7 @@
   <nav>
     <button data-tab="devices" class="tab active">Screens</button>
     <button data-tab="profiles" class="tab">Profiles</button>
+    <button data-tab="content" class="tab">Content</button>
     <button id="logout" class="link">Sign out</button>
   </nav>
 </header>
@@ -60,9 +61,10 @@
           <button type="button" id="add-source" class="secondary">Add source</button>
         </fieldset>
         <fieldset>
-          <legend>Photo fallback</legend>
-          <label>Album <select name="album"></select></label>
-          <label>Seconds per photo <input name="interval" type="number" min="3" value="10"></label>
+          <legend>Slideshow <span class="muted">(when nothing is live)</span></legend>
+          <div id="profile-content-sources"></div>
+          <label>Photo album <select name="album"></select></label>
+          <label>Seconds per slide <input name="interval" type="number" min="3" value="10"></label>
           <label class="inline"><input name="shuffle" type="checkbox"> Shuffle</label>
         </fieldset>
         <p id="profile-error" class="error"></p>
@@ -71,6 +73,32 @@
           <span class="spacer"></span>
           <button type="button" id="cancel-profile" class="secondary">Cancel</button>
           <button type="submit" id="save-profile">Save</button>
+        </div>
+      </form>
+    </dialog>
+  </section>
+
+  <section id="content" hidden>
+    <div class="bar">
+      <h2>Content sources</h2>
+      <button id="new-content">Add source</button>
+    </div>
+    <p class="muted">Announcements and photos from RSS feeds, JSON feeds and folders. Add a source here, then pick it in a profile.</p>
+    <div id="content-list"></div>
+
+    <dialog id="content-dialog">
+      <form id="content-form" method="dialog">
+        <h3 id="content-title">Content source</h3>
+        <label>Name <input name="name" required placeholder="Church announcements"></label>
+        <label>Type <select name="connector" id="content-connector"></select></label>
+        <p id="content-connector-help" class="muted"></p>
+        <div id="content-fields"></div>
+        <p id="content-error" class="error"></p>
+        <div class="actions">
+          <button type="button" id="delete-content" class="danger">Delete</button>
+          <span class="spacer"></span>
+          <button type="button" id="cancel-content" class="secondary">Cancel</button>
+          <button type="submit">Save</button>
         </div>
       </form>
     </dialog>

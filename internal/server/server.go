@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/jumpinjet22/doxacast/core"
+	"github.com/jumpinjet22/doxacast/internal/content"
 )
 
 //go:embed web
@@ -35,6 +36,13 @@ type Config struct {
 	PhotoDir string
 	// OnlineAfter is how recent a heartbeat must be to count as online.
 	OnlineAfter time.Duration
+	// Content fetches and caches connector sources. With Sealer, enables
+	// the content API; nil disables it.
+	Content *content.Manager
+	// Sealer encrypts connector secrets at rest.
+	Sealer *content.Sealer
+	// RefreshEvery is how often each source is re-fetched (default 10 min).
+	RefreshEvery time.Duration
 }
 
 // Server is the HTTP control plane.
@@ -79,6 +87,17 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("PUT /api/v1/admin/profiles/{id}", s.admin(s.saveProfile))
 	mux.HandleFunc("DELETE /api/v1/admin/profiles/{id}", s.admin(s.deleteProfile))
 	mux.HandleFunc("GET /api/v1/admin/albums", s.admin(s.listAlbums))
+
+	// Content sources (connectors).
+	mux.HandleFunc("GET /api/v1/admin/connectors", s.admin(s.listConnectors))
+	mux.HandleFunc("GET /api/v1/admin/sources", s.admin(s.listSources))
+	mux.HandleFunc("POST /api/v1/admin/sources", s.admin(s.saveSource))
+	mux.HandleFunc("PUT /api/v1/admin/sources/{id}", s.admin(s.saveSource))
+	mux.HandleFunc("DELETE /api/v1/admin/sources/{id}", s.admin(s.deleteSource))
+	mux.HandleFunc("POST /api/v1/admin/sources/{id}/refresh", s.admin(s.refreshSourceHandler))
+	mux.HandleFunc("GET /api/v1/admin/sources/{id}/slides", s.admin(s.sourceSlides))
+	mux.HandleFunc("GET "+slideshowManifestPath, s.device(s.deviceSlideshow))
+	mux.HandleFunc("GET /api/v1/content/{source}/files/{name}", s.deviceOrAdmin(s.contentFile))
 
 	// Admin console (static, talks to the admin API).
 	sub, _ := fs.Sub(webFS, "web")
@@ -215,10 +234,11 @@ func (s *Server) desiredState(ctx context.Context, d *Device, rev int64) (core.D
 	if p.PollSeconds > 0 {
 		st.PollSeconds = p.PollSeconds
 	}
-	if p.Album != "" {
+	if p.Album != "" || len(p.SourceIDs) > 0 {
 		st.Slideshow = core.SlideshowSpec{
-			// Relative to the server URL; the device resolves it.
-			ManifestURL:     "/api/v1/photos/" + p.Album + "/manifest",
+			// Relative to the server URL; the device resolves it. Merges the
+			// profile's content sources and photo album.
+			ManifestURL:     slideshowManifestPath,
 			IntervalSeconds: max(p.Interval, 3),
 			Shuffle:         p.Shuffle,
 		}
@@ -413,6 +433,12 @@ func (s *Server) saveProfile(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	for _, id := range p.SourceIDs {
+		if _, err := s.store.GetSource(r.Context(), id); err != nil {
+			httpError(w, http.StatusBadRequest, fmt.Sprintf("unknown content source %q", id))
+			return
+		}
+	}
 	if err := s.store.SaveProfile(r.Context(), &p); err != nil {
 		s.fail(w, err)
 		return
@@ -443,6 +469,15 @@ func validateProfile(p *Profile) error {
 	if p.Album != "" && !safeName(p.Album) {
 		return errors.New("invalid album name")
 	}
+	seenSrc := map[string]bool{}
+	ids := p.SourceIDs[:0]
+	for _, id := range p.SourceIDs {
+		if !seenSrc[id] {
+			seenSrc[id] = true
+			ids = append(ids, id)
+		}
+	}
+	p.SourceIDs = ids
 	seen := map[string]bool{}
 	for i := range p.Sources {
 		src := &p.Sources[i]

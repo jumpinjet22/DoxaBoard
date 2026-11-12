@@ -118,7 +118,7 @@ func TestEndToEnd(t *testing.T) {
 	if st2.Revision <= st.Revision || len(st2.Sources) != 2 || st2.Sources[0].Kind != core.KindMulticast {
 		t.Fatalf("unexpected state %+v", st2)
 	}
-	if st2.Slideshow.ManifestURL != "/api/v1/photos/lobby/manifest" {
+	if st2.Slideshow.ManifestURL != slideshowManifestPath {
 		t.Fatalf("manifest url %q", st2.Slideshow.ManifestURL)
 	}
 
