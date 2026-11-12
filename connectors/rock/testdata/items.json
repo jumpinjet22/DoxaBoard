@@ -1,0 +1,44 @@
+[
+  {
+    "Id": 4411, "Guid": "0d9a1c1e-3c0b-4a43-9c58-0c7d0f4a1101", "ContentChannelId": 12,
+    "Title": "Fall Festival", "Content": "<p>Hay rides, chili &amp; games for the whole family.</p><p>Sunday at 4&nbsp;PM</p>",
+    "Status": 2, "Priority": 0, "Order": 1,
+    "StartDateTime": "2025-12-01T00:00:00", "ExpireDateTime": "2026-02-01T00:00:00", "ModifiedDateTime": "2025-11-20T14:05:11.337",
+    "AttributeValues": { "Image": { "AttributeId": 901, "EntityId": 4411, "Value": "A1B2C3D4-0000-4000-8000-00000000AB01", "ValueFormatted": "fall-festival.jpg" } }
+  },
+  {
+    "Id": 4412, "Guid": "0d9a1c1e-3c0b-4a43-9c58-0c7d0f4a1102", "ContentChannelId": 12,
+    "Title": "Small Groups", "Content": "<h2>Find one that fits</h2><script>alert(1)</script><!-- note --><p>Sign up in the lobby.</p>",
+    "Status": 2, "Priority": 5, "Order": 0,
+    "StartDateTime": "2025-12-15T08:30:00", "ExpireDateTime": null, "ModifiedDateTime": null,
+    "AttributeValues": { "Image": { "Value": "" } }
+  },
+  {
+    "Id": 4413, "ContentChannelId": 12,
+    "Title": "Christmas Eve", "Content": "",
+    "Status": 2, "Priority": 0, "Order": 0,
+    "StartDateTime": "2026-12-01T00:00:00", "ExpireDateTime": "2026-12-25T00:00:00",
+    "AttributeValues": { "Image": { "Value": "/Content/Graphics/christmas-eve.jpg" } }
+  },
+  {
+    "Id": 4414, "ContentChannelId": 12,
+    "Title": "Summer Camp", "Content": "Last year's camp.",
+    "Status": 2, "Priority": 0, "Order": 0,
+    "StartDateTime": "2025-05-01T00:00:00", "ExpireDateTime": "2025-08-01T00:00:00",
+    "AttributeValues": {}
+  },
+  {
+    "Id": 4415, "ContentChannelId": 12,
+    "Title": "Draft: Volunteer Lunch", "Content": "Not approved yet.",
+    "Status": 1, "Priority": 0, "Order": 0,
+    "StartDateTime": "2025-12-01T00:00:00", "ExpireDateTime": null,
+    "AttributeValues": {}
+  },
+  {
+    "Id": 4416, "ContentChannelId": 12,
+    "Title": "", "Content": "",
+    "Status": 2, "Priority": 0, "Order": 0,
+    "StartDateTime": "2025-12-01T00:00:00", "ExpireDateTime": null,
+    "AttributeValues": {}
+  }
+]

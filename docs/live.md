@@ -50,6 +50,8 @@ them up once and you're done.
 ### 3. Schedule (optional)
 
 With a schedule, the **Go live** button picks the right broadcast by itself.
+The schedule only chooses the broadcast: it never starts or ends one. Set it
+up in the console's **Schedule** tab.
 
 - **Every week:** day, start, end, broadcast. E.g. Sunday 08:15-09:45 → *8:30 service*.
   Give each window some slack before and after the service.
@@ -57,7 +59,13 @@ With a schedule, the **Go live** button picks the right broadcast by itself.
   service. **On a date with special entries, the weekly schedule is ignored**
   for that whole day, so the smart button can't pick a regular service by mistake.
 - Times use the server's time zone. Set `DOXABOARD_TIMEZONE` (e.g.
-  `America/Chicago`); the Live tab shows which zone is in effect.
+  `America/Chicago`); the Schedule tab shows which zone is in effect.
+
+The calendar at the top of the Schedule tab (month, week or day) shows what
+the button will pick on any date, including edits you haven't saved yet.
+Overlapping windows are flagged there, since the button refuses to guess
+between them. Click a day or an empty time to add a special date, or an
+entry to jump to the row that defines it.
 
 Without a schedule, pick the broadcast by hand: the Live tab shows a
 **Go live** button for each one.

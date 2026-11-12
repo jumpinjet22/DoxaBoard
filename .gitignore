@@ -8,3 +8,5 @@ deploy/server/data/
 deploy/server/secrets/
 deploy/server/photos/
 deploy/server/rclone/
+deploy/server/theme/
+deploy/server/run/

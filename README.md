@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/assets/doxaboard-mark.svg" width="96" alt=""></p>
+
 # DoxaBoard
 
 [![CI](https://github.com/jumpinjet22/DoxaBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/jumpinjet22/DoxaBoard/actions/workflows/ci.yml)
@@ -58,7 +60,8 @@ goes down, every screen keeps doing what it was last told, even across reboots.
 | Live broadcast: Go live / End, multiple platforms, schedule with special dates, Companion/Stream Deck API | ✅ Console **Live** tab; see [docs/live.md](docs/live.md) |
 | OneDrive photo slideshow | ✅ Works through the server's photo albums |
 | Content sources: RSS/Atom, JSON feed, folder | ✅ Add them in the console's **Content** tab; text-only posts become rendered slides |
-| Rock RMS, WordPress, Planning Center connectors | ⬜ Planned |
+| Rock RMS content channels | 🧪 Built, tested against recorded responses; not yet run against a live Rock server |
+| WordPress, Planning Center connectors | ⬜ Planned |
 | Running on real Pis and TVs | ⬜ **Not yet**: the next milestone |
 
 Everything is covered by automated tests, but **nobody has run it on real
@@ -75,12 +78,15 @@ You need a Linux box on the same network as the screens, with Docker.
 git clone https://github.com/jumpinjet22/DoxaBoard
 cd DoxaBoard/deploy/server
 cp .env.example .env            # set the two tokens: openssl rand -hex 24
-mkdir -p data secrets photos && sudo chown 65532:65532 data secrets
-docker compose run --rm rclone config   # create a remote named "onedrive"
+mkdir -p data secrets photos rclone run
+sudo chown 65532:65532 data secrets photos rclone run
 docker compose up -d
 ```
 
-Open `http://<server>:8080` and sign in with `DOXABOARD_ADMIN_TOKEN`.
+Open `http://<server>:8080` and sign in with `DOXABOARD_ADMIN_TOKEN`. To show
+photos from OneDrive, Google Drive or Dropbox, open **Content → Cloud
+folders → Connect a folder**: you sign in from your browser, with nothing to
+install and no terminal. See [docs/cloud-drives.md](docs/cloud-drives.md).
 
 ### 2. OBS
 
@@ -150,6 +156,9 @@ Go 1.26.11+ (the `go` command fetches it automatically). No cgo, so everything c
 
 - [Architecture](docs/architecture.md)
 - [Connectors and the slide feed](docs/connectors.md)
+- [Cloud drives: OneDrive, Google Drive, Dropbox](docs/cloud-drives.md)
+- [Theming: your colors, fonts and logo](docs/theming.md)
+- [DoxaBoard's own brand: mark, name, colors](docs/brand.md)
 - [Network: multicast, IGMP, long cable runs](docs/network.md)
 - [Hardware: Pi models, power, composite, Android TV](docs/hardware.md)
 - [OBS setup](docs/obs.md)

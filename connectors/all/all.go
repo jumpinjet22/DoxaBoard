@@ -9,5 +9,6 @@ package all
 import (
 	_ "github.com/jumpinjet22/doxaboard/connectors/folder"
 	_ "github.com/jumpinjet22/doxaboard/connectors/jsonfeed"
+	_ "github.com/jumpinjet22/doxaboard/connectors/rock"
 	_ "github.com/jumpinjet22/doxaboard/connectors/rss"
 )

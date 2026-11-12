@@ -21,6 +21,11 @@ func TestAllRegistered(t *testing.T) {
 			t.Error(err)
 		}
 	}
+	if c, ok := registry.Get("rock"); !ok {
+		t.Error(`connector "rock" is not registered`)
+	} else if err := registry.CheckInfo(c.Info()); err != nil {
+		t.Error(err)
+	}
 	if c, _ := registry.Get("folder"); c != nil && !c.Info().UsesFiles {
 		t.Error("folder should set UsesFiles")
 	}

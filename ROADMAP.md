@@ -120,15 +120,18 @@ start/expire, order, duration). A profile's slideshow can merge several sources.
 - ⬜ Listing bot and nightly re-check for community sidecars
 
 **Universal sources (cover most CMSes with no custom code):**
-- ✅ Folder: anything rclone supports (OneDrive, Google Drive, Dropbox, SharePoint, S3, SMB...)
+- ✅ Folder: anything rclone supports (OneDrive, Google Drive, Dropbox, SharePoint, S3, SMB...);
+  OneDrive, Google Drive and Dropbox connect from the console with a browser sign-in
 - ✅ RSS / Atom feed with images (WordPress, Squarespace, Rock channel feeds, most CMSes)
 - ✅ Generic JSON feed: a small documented schema anyone can point a script,
   Zapier/Make flow or CMS template at
 
 **First-class connectors:**
-- ⬜ Rock RMS: content channels (start/expire, order, image attribute),
-  calendar → upcoming events, service schedules → DoxaBoard schedules;
-  read-only REST key, server-side only
+- 🚧 Rock RMS: read-only REST key, server-side only
+  - ✅ Content channels (start/expire, order, image attribute); experimental
+    until it has run against a live Rock server
+  - ⬜ Calendar → upcoming events
+  - ⬜ Service schedules → DoxaBoard schedules
 - ⬜ WordPress REST API (posts or a category, with featured images)
 - ⬜ Planning Center (Calendar events)
 - ⬜ Community-contributed connectors (compiled in, following a documented provider guide)

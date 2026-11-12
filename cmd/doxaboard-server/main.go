@@ -15,10 +15,12 @@ import (
 	_ "time/tzdata" // the container image has no time zone database
 
 	_ "github.com/jumpinjet22/doxaboard/connectors/all" // register content connectors
+	"github.com/jumpinjet22/doxaboard/internal/cloud"
 	"github.com/jumpinjet22/doxaboard/internal/content"
 	"github.com/jumpinjet22/doxaboard/internal/live"
 	"github.com/jumpinjet22/doxaboard/internal/logsafe"
 	"github.com/jumpinjet22/doxaboard/internal/server"
+	"github.com/jumpinjet22/doxaboard/internal/theme"
 )
 
 func env(key, def string) string {
@@ -37,6 +39,10 @@ func main() {
 	relayAPI := flag.String("relay-api", env("DOXABOARD_RELAY_API", "http://127.0.0.1:9997"), "mediamtx control API (localhost only)")
 	livePath := flag.String("live-path", env("DOXABOARD_LIVE_PATH", "live"), "relay path OBS publishes to")
 	tz := flag.String("timezone", env("DOXABOARD_TIMEZONE", ""), "IANA time zone for the live schedule, e.g. America/Chicago (default: system)")
+	themeDir := flag.String("theme", env("DOXABOARD_THEME_DIR", ""), "directory holding theme.json and its fonts and logo (optional)")
+	rcSocket := flag.String("rclone-socket", env("DOXABOARD_RCLONE_SOCKET", ""), "unix socket of the rclone daemon that connects cloud drives (optional)")
+	rcLog := flag.String("rclone-log", env("DOXABOARD_RCLONE_LOG", ""), "the rclone daemon's log file (default: rclone.log next to the socket)")
+	rcPhotos := flag.String("rclone-photos", env("DOXABOARD_RCLONE_PHOTO_DIR", "/photos"), "the photo directory as the rclone daemon sees it")
 	debug := flag.Bool("debug", os.Getenv("DOXABOARD_DEBUG") != "", "verbose logging")
 	flag.Parse()
 
@@ -92,14 +98,41 @@ func main() {
 		log.Error("secret key", "err", err)
 		os.Exit(1)
 	}
+	// A broken theme falls back to the built-in look: branding must never
+	// be the reason screens have no server.
+	th, err := theme.Load(*themeDir)
+	if err != nil {
+		log.Warn("theme not loaded, using the built-in look", "dir", *themeDir, "err", err)
+	}
+	for _, w := range th.Warnings {
+		log.Warn("theme: " + w)
+	}
+	if th.Key() != "" {
+		log.Info("theme loaded", "dir", *themeDir, "name", th.Name)
+	}
+	cfg.Theme = th
 	cfg.Content = &content.Manager{
-		Dir:   filepath.Join(*dataDir, "content"),
-		Style: content.DefaultTextStyle,
+		Dir:      filepath.Join(*dataDir, "content"),
+		Style:    th.TextStyle(),
+		StyleKey: th.Key(),
 		// Content logs carry text from remote feeds: clean it.
 		Logf: logsafe.Printf(func(m string) { log.Info(m) }),
 	}
 	if *photoDir != "" {
 		cfg.Content.Files = os.DirFS(*photoDir)
+	}
+
+	var drives *cloud.Manager
+	if *rcSocket != "" {
+		if *rcLog == "" {
+			*rcLog = filepath.Join(filepath.Dir(*rcSocket), "rclone.log")
+		}
+		drives = &cloud.Manager{
+			Socket: *rcSocket, LogFile: *rcLog, PhotoRoot: *rcPhotos,
+			StateFile: filepath.Join(*dataDir, "cloud.json"),
+			Logf:      logsafe.Printf(func(m string) { log.Info(m) }),
+		}
+		cfg.Cloud = drives
 	}
 
 	app := server.New(cfg, store, log)
@@ -119,6 +152,9 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	go app.RunContent(ctx)
+	if drives != nil {
+		go drives.Run(ctx)
+	}
 	// Keep the relay's outputs in step with what should be live, e.g. after
 	// the relay restarts mid-service.
 	go liveCtl.Run(ctx, 15*time.Second, logsafe.Printf(func(m string) { log.Warn(m) }))

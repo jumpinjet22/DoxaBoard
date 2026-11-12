@@ -3,30 +3,55 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DoxaBoard Admin</title>
+<title>DoxaBoard</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#2563c9">
+<script>
+  // Apply a saved light/dark choice before the page paints, so it doesn't flash.
+  try { const m = localStorage.getItem("doxaboard.mode"); if (m === "light" || m === "dark") document.documentElement.dataset.mode = m; } catch (_) {}
+</script>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="theme.css">
 </head>
 <body>
 <header>
-  <h1>DoxaBoard</h1>
+  <h1 id="brand"><img id="brand-logo" alt="" hidden><svg class="mark" viewBox="0 0 32 32" aria-hidden="true" id="brand-mark"><rect x="3" y="5.5" width="26" height="18.5" rx="3" fill="none" stroke="currentColor" stroke-width="2.4"/>
+<path d="M9.8 24a6.2 6.2 0 0 1 12.4 0z" fill="currentColor"/>
+<path d="M16 15.6v-3.2M22.1 17.9l2.2-2.2M9.9 17.9l-2.2-2.2M11.5 28.2h9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span id="brand-name"><span class="wm-doxa">Doxa</span><span class="wm-board">Board</span></span></h1>
   <nav>
     <button data-tab="live" class="tab">Live</button>
+    <button data-tab="schedule" class="tab">Schedule</button>
     <button data-tab="devices" class="tab active">Screens</button>
     <button data-tab="profiles" class="tab">Profiles</button>
     <button data-tab="content" class="tab">Content</button>
+    <button id="mode" class="link icon" data-mode="auto" aria-label="Appearance">
+      <svg class="i-auto" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>
+      <svg class="i-light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg class="i-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.2A8.3 8.3 0 0 1 9.8 4a8.3 8.3 0 1 0 10.2 10.2z" fill="currentColor"/></svg>
+    </button>
     <button id="logout" class="link">Sign out</button>
   </nav>
 </header>
 
 <main>
   <section id="login" hidden>
-    <h2>Sign in</h2>
-    <p>Enter the admin token configured on the server (<code>DOXABOARD_ADMIN_TOKEN</code>).</p>
-    <form id="login-form">
-      <input id="token" type="password" autocomplete="current-password" placeholder="Admin token" required>
-      <button type="submit">Sign in</button>
-    </form>
-    <p id="login-error" class="error"></p>
+    <div class="login-card">
+      <img id="login-logo" alt="" hidden><svg class="mark login-mark" viewBox="0 0 32 32" aria-hidden="true" id="login-mark"><rect x="3" y="5.5" width="26" height="18.5" rx="3" fill="none" stroke="currentColor" stroke-width="2.4"/>
+<path d="M9.8 24a6.2 6.2 0 0 1 12.4 0z" fill="currentColor"/>
+<path d="M16 15.6v-3.2M22.1 17.9l2.2-2.2M9.9 17.9l-2.2-2.2M11.5 28.2h9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <div class="login-wordmark"><span class="wm-doxa">Doxa</span><span class="wm-board">Board</span></div>
+      <p id="login-org" class="login-org" hidden></p>
+      <p class="muted login-tag">One live stream, every screen in the building.</p>
+      <form id="login-form">
+        <label for="token">Admin token</label>
+        <div class="login-row">
+          <input id="token" type="password" autocomplete="current-password" required>
+          <button type="submit">Sign in</button>
+        </div>
+        <p class="field-help">The <code>DOXABOARD_ADMIN_TOKEN</code> set on the server.</p>
+      </form>
+      <p id="login-error" class="error"></p>
+    </div>
   </section>
 
   <section id="devices" hidden>
@@ -88,16 +113,6 @@
     <p class="muted">A broadcast is where a service goes: one or more outputs (Vimeo, YouTube, Facebook, any RTMP/SRT ingest). Stream keys are stored encrypted.</p>
     <div id="broadcast-list"></div>
 
-    <div class="bar"><h3>Schedule</h3><button id="save-schedule">Save schedule</button></div>
-    <p class="muted">Optional. The <strong>Go live</strong> button picks the broadcast scheduled right now. On a date with special events, they replace the weekly schedule.</p>
-    <h4>Every week</h4>
-    <div id="slot-rows"></div>
-    <button type="button" id="add-slot" class="secondary">Add weekly time</button>
-    <h4>Special dates</h4>
-    <div id="special-rows"></div>
-    <button type="button" id="add-special" class="secondary">Add special date</button>
-    <p id="schedule-msg" class="muted"></p>
-
     <dialog id="broadcast-dialog">
       <form id="broadcast-form" method="dialog">
         <h3 id="broadcast-title">Broadcast</h3>
@@ -122,6 +137,61 @@
     </dialog>
   </section>
 
+  <section id="schedule" hidden>
+    <div class="bar">
+      <h2>Schedule</h2>
+      <span id="schedule-tz" class="muted"></span>
+    </div>
+    <p class="muted">The schedule decides which broadcast the <strong>Go live</strong> button picks at a given time. It never starts or ends a broadcast by itself.</p>
+    <div id="schedule-empty" class="card" hidden>
+      <span>The schedule points at broadcasts, and there aren't any yet.</span>
+      <button type="button" id="schedule-to-live" class="secondary">Add a broadcast</button>
+    </div>
+
+    <div id="schedule-editor">
+      <div id="schedule-problems"></div>
+      <div class="cal-bar">
+        <span id="cal-views" class="seg" role="group" aria-label="Calendar view">
+          <button type="button" data-view="month">Month</button>
+          <button type="button" data-view="week">Week</button>
+          <button type="button" data-view="day">Day</button>
+        </span>
+        <button type="button" id="cal-prev" class="secondary" aria-label="Previous">‹</button>
+        <h3 id="cal-title" aria-live="polite"></h3>
+        <button type="button" id="cal-next" class="secondary" aria-label="Next">›</button>
+        <button type="button" id="cal-today" class="secondary">Today</button>
+        <span class="spacer"></span>
+        <span class="legend"><span class="cal-chip">Weekly</span><span class="cal-chip special">Special date</span><span class="cal-chip clash">Overlap</span></span>
+      </div>
+      <div id="schedule-cal"></div>
+      <p id="cal-hint" class="muted"></p>
+
+      <div class="bar"><h3>Every week</h3><button type="button" id="add-slot" class="secondary">Add weekly time</button></div>
+      <p class="muted">Give each window some slack before and after the service, e.g. 08:15 to 09:45 for an 8:30 service.</p>
+      <div class="sched-row sched-head" aria-hidden="true"><span>Day</span><span>Starts</span><span>Ends</span><span>Broadcast</span><span></span></div>
+      <div id="slot-rows"></div>
+      <p id="slot-empty" class="muted">No weekly times yet.</p>
+
+      <div class="bar"><h3>Special dates</h3>
+        <span class="bar-buttons">
+          <button type="button" id="clear-past" class="secondary" hidden>Remove past dates</button>
+          <button type="button" id="add-special" class="secondary">Add special date</button>
+        </span>
+      </div>
+      <p class="muted">For one-off services such as a combined Christmas service. On a date with special entries, the weekly schedule is ignored for that whole day.</p>
+      <div class="sched-row special sched-head" aria-hidden="true"><span>Date</span><span>Name</span><span>Starts</span><span>Ends</span><span>Broadcast</span><span></span></div>
+      <div id="special-rows"></div>
+      <p id="special-empty" class="muted">No special dates yet.</p>
+
+      <div id="schedule-save" class="save-bar">
+        <span id="schedule-msg" class="muted"></span>
+        <span class="spacer"></span>
+        <button type="button" id="discard-schedule" class="secondary" disabled>Discard changes</button>
+        <button type="button" id="save-schedule" disabled>Save schedule</button>
+      </div>
+    </div>
+  </section>
+
   <section id="content" hidden>
     <div class="bar">
       <h2>Content sources</h2>
@@ -129,6 +199,51 @@
     </div>
     <p class="muted">Announcements and photos from RSS feeds, JSON feeds and folders. Add a source here, then pick it in a profile.</p>
     <div id="content-list"></div>
+
+    <div class="bar section-bar"><h3>Cloud folders</h3><button id="new-cloud" class="secondary">Connect a folder</button></div>
+    <p class="muted">Photos from OneDrive, Google Drive or Dropbox. Each folder you connect becomes a photo album that stays in step with the cloud folder; pick the album in a profile.</p>
+    <div id="cloud-problem" class="notice" hidden></div>
+    <div id="cloud-list"></div>
+    <div id="cloud-drives"></div>
+
+    <dialog id="cloud-dialog">
+      <form id="cloud-form" method="dialog">
+        <h3 id="cloud-title">Connect a cloud folder</h3>
+
+        <div id="cloud-step-drive">
+          <p>Where are the photos?</p>
+          <div id="cloud-choices" class="choice-list"></div>
+        </div>
+
+        <div id="cloud-step-signin" hidden>
+          <ol class="steps">
+            <li><a id="cloud-auth-link" class="button" target="_blank" rel="noopener noreferrer">Open the sign-in page</a>
+              <div class="field-help">It opens in a new tab. Sign in and approve access. The consent page says "rclone", the tool DoxaBoard uses; DoxaBoard only reads your files.</div></li>
+            <li>Your browser then lands on a page that <strong>won't load</strong> ("This site can't be reached"), with an address starting
+              <code>http://localhost:53682/</code> or <code>http://127.0.0.1:53682/</code>. That's expected.</li>
+            <li><label>Copy that page's whole address and paste it here
+              <input id="cloud-paste" autocomplete="off" spellcheck="false" placeholder="http://localhost:53682/?code=…&amp;state=…"></label>
+              <button type="button" id="cloud-finish">Finish sign-in</button></li>
+          </ol>
+        </div>
+
+        <div id="cloud-step-folder" hidden>
+          <p>Pick the folder with the photos. Only pictures directly inside it are used.</p>
+          <div id="cloud-crumbs" class="crumbs"></div>
+          <div id="cloud-folders" class="folder-list"></div>
+          <label>Album name <input id="cloud-album" maxlength="64" placeholder="Lobby"></label>
+          <p class="field-help">Pictures removed from the cloud folder are removed from the album too.</p>
+        </div>
+
+        <p id="cloud-error" class="error"></p>
+        <div class="actions">
+          <button type="button" id="cloud-back" class="secondary" hidden>Back</button>
+          <span class="spacer"></span>
+          <button type="button" id="cancel-cloud" class="secondary">Cancel</button>
+          <button type="button" id="cloud-save" hidden>Connect this folder</button>
+        </div>
+      </form>
+    </dialog>
 
     <dialog id="content-dialog">
       <form id="content-form" method="dialog">
@@ -148,6 +263,12 @@
     </dialog>
   </section>
 </main>
+
+<footer class="site-footer"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="5.5" width="26" height="18.5" rx="3" fill="none" stroke="currentColor" stroke-width="2.4"/>
+<path d="M9.8 24a6.2 6.2 0 0 1 12.4 0z" fill="currentColor"/>
+<path d="M16 15.6v-3.2M22.1 17.9l2.2-2.2M9.9 17.9l-2.2-2.2M11.5 28.2h9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span><span class="wm-doxa">Doxa</span>Board</span>
+  <a href="https://github.com/jumpinjet22/DoxaBoard" target="_blank" rel="noopener noreferrer">GitHub</a>
+</footer>
 
 <script src="app.js"></script>
 </body>

@@ -17,6 +17,7 @@ import (
 	"github.com/jumpinjet22/doxaboard/connectors/registry"
 	"github.com/jumpinjet22/doxaboard/core"
 	"github.com/jumpinjet22/doxaboard/internal/content"
+	"github.com/jumpinjet22/doxaboard/internal/theme"
 )
 
 func newContentServer(t *testing.T) (*httptest.Server, *Store) {
@@ -60,7 +61,8 @@ func TestContentSourcesEndToEnd(t *testing.T) {
 			w.Write([]byte(`{"schema":"doxaboard.slides/v1","slides":[
 				{"id":"welcome","title":"Welcome","image":{"url":"/hero.png","alt":"hero"},"order":1},
 				{"id":"groups","title":"Small Groups","body":"Find one that fits.","order":2},
-				{"id":"old","title":"Past event","expires_at":"2020-01-01T00:00:00Z"}]}`))
+				{"id":"old","title":"Past event","expires_at":"2020-01-01T00:00:00Z"},
+				{"id":"soon","title":"Next month","starts_at":"2999-01-01T00:00:00Z","expires_at":"2999-02-01T00:00:00Z"}]}`))
 		case "/hero.png":
 			w.Write(pngBytes())
 		default:
@@ -124,10 +126,10 @@ func TestContentSourcesEndToEnd(t *testing.T) {
 		t.Fatal("source list exposes the secret")
 	}
 
-	// Refresh: two current slides (one rendered from text), the expired one filtered later.
+	// Refresh: two current slides (one rendered from text); the expired and upcoming ones are filtered later.
 	var st content.Status
 	call(t, srv, "POST", "/api/v1/admin/sources/"+v.ID+"/refresh", adminTok, nil, &st)
-	if !st.OK || st.Slides != 3 {
+	if !st.OK || st.Slides != 4 {
 		t.Fatalf("refresh status %+v", st)
 	}
 	if gotAuth != "Bearer super-secret-token" {
@@ -168,6 +170,19 @@ func TestContentSourcesEndToEnd(t *testing.T) {
 	if len(m.Photos) != 3 { // 2 active source slides + 1 album photo
 		t.Fatalf("manifest has %d photos: %+v", len(m.Photos), m.Photos)
 	}
+	// Agents that apply the times themselves also get upcoming slides, with
+	// their windows; expired ones are never sent.
+	var sched PhotoManifest
+	call(t, srv, "GET", slideshowManifestPath+"?schedule=1", enr.DeviceToken, nil, &sched)
+	var upcoming int
+	for _, ph := range sched.Photos {
+		if ph.StartsAt != nil && ph.ExpiresAt != nil && ph.StartsAt.Year() == 2999 {
+			upcoming++
+		}
+	}
+	if len(sched.Photos) != 4 || upcoming != 1 {
+		t.Fatalf("schedule manifest: %d photos, %d upcoming: %+v", len(sched.Photos), upcoming, sched.Photos)
+	}
 	resp := mustGet(t, srv, m.Photos[0].URL, enr.DeviceToken)
 	if ct := resp.Header.Get("Content-Type"); ct != "image/jpeg" {
 		t.Fatalf("content type %q", ct)
@@ -206,4 +221,46 @@ func mustGet(t *testing.T, srv *httptest.Server, path, tok string) *http.Respons
 		t.Fatalf("GET %s: %d", path, resp.StatusCode)
 	}
 	return resp
+}
+
+func TestThemeEndpoints(t *testing.T) {
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "logo.svg"), []byte(`<svg xmlns="http://www.w3.org/2000/svg"/>`), 0o644)
+	os.WriteFile(filepath.Join(dir, theme.File), []byte(`{"name":"Example Church","logo":"logo.svg","console":{"light":{"accent":"#52635f"}}}`), 0o644)
+	th, err := theme.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := OpenStore(filepath.Join(t.TempDir(), "t.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { store.Close() })
+	body := func(h http.Handler, path string) (int, string, http.Header) {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest("GET", path, nil))
+		return rec.Code, rec.Body.String(), rec.Header()
+	}
+
+	themed := New(Config{AdminToken: adminTok, EnrollmentToken: enrollTok, Theme: th}, store, nil).Handler()
+	if code, css, _ := body(themed, "/theme.css"); code != 200 || !strings.Contains(css, "--accent:#52635f;") {
+		t.Errorf("theme.css: %d %q", code, css)
+	}
+	if code, info, _ := body(themed, "/api/v1/theme"); code != 200 || !strings.Contains(info, `"name":"Example Church"`) || !strings.Contains(info, `"logo":"theme/logo.svg"`) {
+		t.Errorf("theme info: %d %s", code, info)
+	}
+	if code, _, hdr := body(themed, "/theme/logo.svg"); code != 200 || hdr.Get("Content-Security-Policy") == "" {
+		t.Errorf("logo: %d, CSP %q", code, hdr.Get("Content-Security-Policy"))
+	}
+	if code, _, _ := body(themed, "/theme/theme.json"); code != 404 {
+		t.Errorf("theme.json itself must not be served: %d", code)
+	}
+
+	plain := New(Config{AdminToken: adminTok, EnrollmentToken: enrollTok}, store, nil).Handler()
+	if code, css, _ := body(plain, "/theme.css"); code != 200 || css != "" {
+		t.Errorf("no theme: %d %q", code, css)
+	}
+	if code, info, _ := body(plain, "/api/v1/theme"); code != 200 || strings.TrimSpace(info) != "{}" {
+		t.Errorf("no theme info: %d %s", code, info)
+	}
 }

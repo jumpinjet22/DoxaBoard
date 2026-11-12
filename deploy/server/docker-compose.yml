@@ -4,12 +4,15 @@
 #                                   +--> SRT/RTSP/HLS for screens that pull
 #                                   +--> Vimeo / YouTube / Facebook (Go Live)
 #
-#   rclone (OneDrive) --> ./photos --> doxaboard-server --> screens (cached)
+#   rclone (cloud drives) --> ./photos --> doxaboard-server --> screens (cached)
 #
 # Usage:
 #   cp .env.example .env   # then edit it
-#   docker compose run --rm rclone config   # one time: connect OneDrive
+#   mkdir -p data secrets photos rclone run
+#   sudo chown 65532:65532 data secrets photos rclone run
 #   docker compose up -d
+#
+# Cloud drives are connected from the console (Content > Cloud folders).
 #
 # Both services use host networking. The relay needs it for multicast and
 # SRT (UDP); the server needs it to reach the relay's control API, which
@@ -33,10 +36,16 @@ services:
       DOXABOARD_TIMEZONE: ${DOXABOARD_TIMEZONE:-}
       DOXABOARD_LIVE_TOKEN: ${DOXABOARD_LIVE_TOKEN:-}
       DOXABOARD_RELAY_API: http://127.0.0.1:9997
+      # Optional branding: put theme.json (and its fonts and logo) in ./theme.
+      # See docs/theming.md.
+      DOXABOARD_THEME_DIR: /theme
+      DOXABOARD_RCLONE_SOCKET: /run/rclone/rclone.sock
     volumes:
+      - ./run:/run/rclone
       - ./data:/data
       - ./secrets:/secrets
       - ./photos:/photos:ro
+      - ./theme:/theme:ro
 
   relay:
     # The -ffmpeg variant includes ffmpeg for the multicast fanout.
@@ -54,19 +63,27 @@ services:
       - ./relay/on-ready.sh:/on-ready.sh:ro
 
   rclone:
-    # Mirrors a OneDrive folder into ./photos. Each subfolder is an album.
+    # Connects cloud drives (OneDrive, Google Drive, Dropbox) and mirrors
+    # the folders you pick into ./photos, one album each. Set it up in the
+    # console: Content > Cloud folders. See docs/cloud-drives.md.
+    #
+    # It runs as a daemon the server drives over a unix socket in ./run;
+    # nothing listens on the network. Host networking is for the sign-in:
+    # while you connect a drive, rclone listens on 127.0.0.1:53682 and the
+    # server hands it the result.
     image: rclone/rclone:1.76@sha256:7cbeec24a44f206067597c0368be4de90ae19a64d5113c7d1938bd737a81e466
     restart: unless-stopped
-    entrypoint: ["/bin/sh", "-c"]
+    network_mode: host
+    # Same user as the server, so the server can open the socket.
+    user: "65532:65532"
     command:
-      - |
-        while true; do
-          rclone sync "onedrive:${ONEDRIVE_PATH:-DoxaBoard}" /photos \
-            --ignore-case --include "*.{jpg,jpeg,png,webp,gif}" \
-            --max-size 50M --transfers 4 --log-level NOTICE \
-            || echo "sync failed; will retry"
-          sleep ${ONEDRIVE_SYNC_SECONDS:-600}
-        done
+      - rcd
+      - --rc-addr=unix:///run/rclone/rclone.sock
+      - --rc-no-auth
+      - --log-file=/run/rclone/rclone.log
+      - --log-file-max-size=5M
+      - --log-file-max-backups=1
     volumes:
       - ./rclone:/config/rclone
       - ./photos:/photos
+      - ./run:/run/rclone

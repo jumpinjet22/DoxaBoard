@@ -63,8 +63,11 @@ type Manager struct {
 	// Files is handed to folder-style connectors (the server's photo dir).
 	Files fs.FS
 	Style TextStyle
-	Logf  func(format string, args ...any)
-	Now   func() time.Time
+	// StyleKey identifies Style. Change it when the style changes so text
+	// slides are rendered again instead of reused from the cache.
+	StyleKey string
+	Logf     func(format string, args ...any)
+	Now      func() time.Time
 	// Transport is the base HTTP transport (tests swap it); nil = default.
 	Transport http.RoundTripper
 
@@ -211,7 +214,11 @@ func (m *Manager) prepare(ctx context.Context, sourceID string, s slides.Slide, 
 	if s.UpdatedAt != nil {
 		updated = s.UpdatedAt.UTC().Format(time.RFC3339)
 	}
-	h := sha256.Sum256([]byte(s.ID + "\x00" + imgURL + "\x00" + updated + "\x00" + s.Title + "\x00" + s.Body))
+	key := s.ID + "\x00" + imgURL + "\x00" + updated + "\x00" + s.Title + "\x00" + s.Body
+	if imgURL == "" && m.StyleKey != "" {
+		key += "\x00" + m.StyleKey // a text slide looks different under another theme
+	}
+	h := sha256.Sum256([]byte(key))
 	name := hex.EncodeToString(h[:12]) + ".jpg"
 	path := filepath.Join(m.dir(sourceID), name)
 

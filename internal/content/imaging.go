@@ -90,20 +90,25 @@ func encodeJPEG(img image.Image) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-// TextStyle controls rendered text slides. Theming will set these.
+// TextStyle controls rendered text slides. A theme sets these; anything
+// left unset falls back to DefaultTextStyle and the built-in fonts.
 type TextStyle struct {
 	Background color.Color
 	Title      color.Color
 	Body       color.Color
 	Accent     color.Color
+	// TitleFace and BodyFace come from TextFaces.
+	TitleFace font.Face
+	BodyFace  font.Face
 }
 
-// DefaultTextStyle is a neutral dark theme that reads well on any TV.
+// DefaultTextStyle is DoxaBoard's own look: cool near-black with the brand
+// blue as the accent. It reads well on any TV. See docs/brand.md.
 var DefaultTextStyle = TextStyle{
-	Background: color.RGBA{0x1d, 0x1f, 0x22, 0xff},
-	Title:      color.RGBA{0xf5, 0xf3, 0xee, 0xff},
-	Body:       color.RGBA{0xc9, 0xc6, 0xbf, 0xff},
-	Accent:     color.RGBA{0x8a, 0x9e, 0x99, 0xff},
+	Background: color.RGBA{0x10, 0x14, 0x1a, 0xff},
+	Title:      color.RGBA{0xf2, 0xf5, 0xf9, 0xff},
+	Body:       color.RGBA{0xc3, 0xca, 0xd6, 0xff},
+	Accent:     color.RGBA{0x6a, 0xa8, 0xff, 0xff},
 }
 
 // withDefaults fills unset colors from DefaultTextStyle.
@@ -129,11 +134,32 @@ var (
 	faceErr             error
 )
 
+const (
+	titleSize = 84
+	bodySize  = 50
+)
+
 func init() {
-	titleFace, faceErr = newFace(gobold.TTF, 84)
-	if faceErr == nil {
-		bodyFace, faceErr = newFace(goregular.TTF, 50)
+	titleFace, bodyFace, faceErr = TextFaces(nil, nil)
+}
+
+// TextFaces builds the title and body faces for text slides from TTF or
+// OTF data, at the sizes the layout expects. A nil font means the built-in
+// one.
+func TextFaces(titleTTF, bodyTTF []byte) (title, body font.Face, err error) {
+	if titleTTF == nil {
+		titleTTF = gobold.TTF
 	}
+	if bodyTTF == nil {
+		bodyTTF = goregular.TTF
+	}
+	if title, err = newFace(titleTTF, titleSize); err != nil {
+		return nil, nil, fmt.Errorf("title font: %w", err)
+	}
+	if body, err = newFace(bodyTTF, bodySize); err != nil {
+		return nil, nil, fmt.Errorf("body font: %w", err)
+	}
+	return title, body, nil
 }
 
 func newFace(ttf []byte, size float64) (font.Face, error) {
@@ -151,6 +177,13 @@ func RenderText(title, body string, style TextStyle) ([]byte, error) {
 		return nil, faceErr
 	}
 	style = style.withDefaults()
+	titleFace, bodyFace := titleFace, bodyFace
+	if style.TitleFace != nil {
+		titleFace = style.TitleFace
+	}
+	if style.BodyFace != nil {
+		bodyFace = style.BodyFace
+	}
 	img := image.NewRGBA(image.Rect(0, 0, ScreenW, ScreenH))
 	draw.Draw(img, img.Bounds(), image.NewUniform(style.Background), image.Point{}, draw.Src)
 
