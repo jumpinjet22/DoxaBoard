@@ -34,7 +34,7 @@ services:
   relay:
     # The -ffmpeg variant includes ffmpeg for the multicast and Vimeo outputs.
     # Pin a version you've tested; bump deliberately.
-    image: bluenviron/mediamtx:1.9.3-ffmpeg
+    image: bluenviron/mediamtx:1.21.3-ffmpeg
     restart: unless-stopped
     network_mode: host
     environment:
