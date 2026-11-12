@@ -13,6 +13,13 @@ Vimeo requires **H.264**, and we send one stream everywhere, so H.264 it is.
 Pi 4 is the safe choice and the only sensible one for composite. Test a Pi 5
 on your actual stream before buying a stack of them.
 
+**Pi Zero W / Zero 2 W:** not recommended. The Zero W (original) is a
+single-core ARMv6 with Wi-Fi only, which rules out wired multicast and
+smooth 1080p. The Zero 2 W can hardware-decode 1080p30 H.264, but it has
+512 MB RAM and no Ethernet port, so you'd need a USB OTG Ethernet adapter
+(another part to wiggle loose). It might work for a low-stakes screen; test it
+before you buy a stack.
+
 Use Raspberry Pi OS **Lite**. The agent drives the display directly through DRM (no desktop).
 
 ## Power

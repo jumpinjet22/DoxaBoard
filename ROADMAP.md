@@ -62,6 +62,18 @@ The goal is one OBS stream on a few Pis with automatic failover, and photos when
 - ⬜ Offline alerts (email/webhook) when a screen misses heartbeats
 - ⬜ Per-screen health history (link speed drops, error counters, temperature)
 
+## Milestone 2.5: Theming ⬜
+
+Brand everything from one place, with no code changes.
+
+- ⬜ Theme settings in the console: logo, colors, fonts, background
+- ⬜ Admin console follows the theme
+- ⬜ Branded idle screen (logo + message) instead of black
+- ⬜ Optional overlays on screens: logo bug, clock, "Live" badge, lower-third text
+- ⬜ Slide templates (title + image + text) that use the theme
+- ⬜ Ship a neutral default theme; theme files are importable/exportable so
+  churches can share them
+
 ## Milestone 3: Composite and legacy screens ⬜
 
 - ⬜ Composite output mode end to end: config.txt helper, NTSC/PAL, 4:3 safe area
@@ -75,6 +87,19 @@ The goal is one OBS stream on a few Pis with automatic failover, and photos when
 - ⬜ Device Owner provisioning via adb: kiosk lock, boot launch, remote reboot
 - ⬜ Test hardware: Google TV Streamer, onn 4K Pro (built-in Ethernet)
 - ⬜ Web player page as a zero-install option for one-off screens
+
+## Milestone 4.5: Rock RMS integration ⬜
+
+Optional connector for churches running [Rock RMS](https://www.rockrms.com/).
+
+- ⬜ Content provider abstraction: a slideshow can come from a OneDrive folder
+  **or** a Rock content channel
+- ⬜ Rock content channel → announcement slides (image, title, summary,
+  start/expire dates respected)
+- ⬜ Rock calendar → "upcoming events" slide
+- ⬜ Rock service schedules → DoxaCast schedules (go live for service times)
+- ⬜ Rock REST API key auth (`Authorization-Token`), read-only, server-side only
+- ⬜ Later: sign in to the admin console with Rock accounts
 
 ## Milestone 5: Hardening for other churches ⬜
 
