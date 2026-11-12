@@ -24,7 +24,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/labeler@v5
+      - uses: actions/labeler@v7
         with:
           sync-labels: false
 
@@ -34,7 +34,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v9
         with:
           script: |
             // Issue forms render "### Area" followed by the chosen option.
