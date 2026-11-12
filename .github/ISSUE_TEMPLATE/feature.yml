@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest an idea or improvement.
+labels: [enhancement, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: Check the [roadmap](https://github.com/jumpinjet22/DoxaCast/blob/main/ROADMAP.md) first. It might already be planned.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Screens / agent (Pi)
+        - Server / admin console
+        - Connectors / content
+        - Relay / streaming
+        - Install / deploy
+        - Docs
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the situation, not just the solution. "On Sunday mornings we need to..."
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to happen?

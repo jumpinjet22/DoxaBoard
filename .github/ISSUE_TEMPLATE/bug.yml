@@ -1,0 +1,54 @@
+name: Bug report
+description: Something isn't working.
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Security problem?** Don't file it here. Use Security → Report a vulnerability.
+
+        Please don't paste API keys, enrollment tokens, or real member data.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Screens / agent (Pi)
+        - Server / admin console
+        - Connectors / content
+        - Relay / streaming
+        - Install / deploy
+        - Docs
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: And what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: "e.g. `journalctl -u doxacast-agent -n 100` or `docker compose logs server`. Remove tokens first."
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: DoxaCast version
+      placeholder: "doxacast-agent -version"
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware / OS
+      placeholder: Pi 4, Raspberry Pi OS Lite (Bookworm)

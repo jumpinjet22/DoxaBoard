@@ -58,7 +58,7 @@ func (s *Slideshow) logf(f string, a ...any) {
 
 // Start begins showing photos.
 func (s *Slideshow) Start(ctx context.Context, spec core.SlideshowSpec) error {
-	s.Stop()
+	_ = s.Stop()
 
 	syncCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	files, err := s.sync(syncCtx, spec)

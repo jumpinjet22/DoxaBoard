@@ -17,7 +17,7 @@ type mpvProcess struct {
 
 func startMpv(path string, args []string, logf func(string, ...any)) (*mpvProcess, error) {
 	// Not CommandContext: mpv must outlive the request that started it.
-	cmd := exec.Command(path, args...)
+	cmd := exec.Command(path, args...) //nolint:noctx // see comment above
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("start mpv: %w", err)

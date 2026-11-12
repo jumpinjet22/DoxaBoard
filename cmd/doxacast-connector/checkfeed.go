@@ -106,7 +106,7 @@ func (c *checker) isURL() bool {
 // load returns the raw feed.
 func (c *checker) load(ctx context.Context, stdin io.Reader) ([]byte, http.Header, error) {
 	if !c.isURL() {
-		var r io.Reader = stdin
+		r := stdin
 		if c.source != "-" {
 			f, err := os.Open(c.source)
 			if err != nil {

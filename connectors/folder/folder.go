@@ -57,7 +57,7 @@ func (c Connector) New(cfg registry.Config, deps registry.Deps) (registry.Source
 	}
 	album := cfg["album"]
 	if err := checkName(album); err != nil {
-		return nil, fmt.Errorf("Album folder %w", err)
+		return nil, fmt.Errorf("album folder %w", err)
 	}
 	logf := deps.Logf
 	if logf == nil {

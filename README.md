@@ -1,5 +1,9 @@
 # DoxaCast
 
+[![CI](https://github.com/jumpinjet22/DoxaCast/actions/workflows/ci.yml/badge.svg)](https://github.com/jumpinjet22/DoxaCast/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/jumpinjet22/DoxaCast/actions/workflows/codeql.yml/badge.svg)](https://github.com/jumpinjet22/DoxaCast/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/jumpinjet22/DoxaCast/badge)](https://scorecard.dev/viewer/?uri=github.com/jumpinjet22/DoxaCast)
+
 **One live stream, every screen in the building, and screens that keep going no matter what.**
 
 DoxaCast takes a single stream from OBS and puts it on every TV in a church

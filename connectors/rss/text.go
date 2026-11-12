@@ -93,7 +93,11 @@ func tagName(tag string) (name string, closing bool) {
 		tag = tag[1:]
 	}
 	end := strings.IndexFunc(tag, func(r rune) bool {
-		return !(r < utf8.RuneSelf && (isASCIILetter(byte(r)) || r >= '0' && r <= '9'))
+		if r >= utf8.RuneSelf {
+			return true
+		}
+		c := byte(r) //nolint:gosec // r < RuneSelf, so it fits in a byte
+		return !isASCIILetter(c) && (c < '0' || c > '9')
 	})
 	if end >= 0 {
 		tag = tag[:end]
