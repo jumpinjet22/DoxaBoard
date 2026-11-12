@@ -1,0 +1,7 @@
+{
+  "server_url": "http://doxacast.local:8080",
+  "enrollment_token": "paste DOXACAST_ENROLLMENT_TOKEN here",
+  "data_dir": "/var/lib/doxacast",
+  "interface": "eth0",
+  "mpv_args": ["--vo=gpu", "--gpu-context=drm", "--audio-device=alsa/sysdefault"]
+}

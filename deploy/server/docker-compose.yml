@@ -1,0 +1,65 @@
+# DoxaCast server stack.
+#
+#   OBS --SRT--> relay (mediamtx) --+--> multicast to every screen on the LAN
+#                                   +--> SRT/RTSP/HLS for screens that pull
+#                                   +--> Vimeo (RTMPS), if configured
+#
+#   rclone (OneDrive) --> ./photos --> doxacast-server --> screens (cached)
+#
+# Usage:
+#   cp .env.example .env   # then edit it
+#   docker compose run --rm rclone config   # one time: connect OneDrive
+#   docker compose up -d
+#
+# The relay uses host networking: multicast does not survive Docker's
+# bridge network, and SRT is UDP, which is fiddly to publish otherwise.
+
+services:
+  server:
+    build:
+      context: ../..
+      dockerfile: deploy/server/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DOXACAST_ADMIN_TOKEN: ${DOXACAST_ADMIN_TOKEN:?set in .env}
+      DOXACAST_ENROLLMENT_TOKEN: ${DOXACAST_ENROLLMENT_TOKEN:?set in .env}
+      DOXACAST_DB: /data/doxacast.db
+      DOXACAST_PHOTO_DIR: /photos
+    volumes:
+      - ./data:/data
+      - ./photos:/photos:ro
+
+  relay:
+    # The -ffmpeg variant includes ffmpeg for the multicast and Vimeo outputs.
+    # Pin a version you've tested; bump deliberately.
+    image: bluenviron/mediamtx:1.9.3-ffmpeg
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      MULTICAST_ADDR: ${MULTICAST_ADDR:-239.10.10.1:5000}
+      MULTICAST_TTL: ${MULTICAST_TTL:-2}
+      MULTICAST_IFACE_ADDR: ${MULTICAST_IFACE_ADDR:-}
+      VIMEO_RTMP_URL: ${VIMEO_RTMP_URL:-}
+    volumes:
+      - ./relay/mediamtx.yml:/mediamtx.yml:ro
+      - ./relay/on-ready.sh:/on-ready.sh:ro
+
+  rclone:
+    # Mirrors a OneDrive folder into ./photos. Each subfolder is an album.
+    image: rclone/rclone:1.68
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          rclone sync "onedrive:${ONEDRIVE_PATH:-DoxaCast}" /photos \
+            --ignore-case --include "*.{jpg,jpeg,png,webp,gif}" \
+            --max-size 50M --transfers 4 --log-level NOTICE \
+            || echo "sync failed; will retry"
+          sleep ${ONEDRIVE_SYNC_SECONDS:-600}
+        done
+    volumes:
+      - ./rclone:/config/rclone
+      - ./photos:/photos

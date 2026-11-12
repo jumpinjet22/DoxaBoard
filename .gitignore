@@ -1,0 +1,9 @@
+/dist/
+*.db
+*.db-shm
+*.db-wal
+/dev-photos/
+deploy/server/.env
+deploy/server/data/
+deploy/server/photos/
+deploy/server/rclone/

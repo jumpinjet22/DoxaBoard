@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DoxaCast Admin</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>DoxaCast</h1>
+  <nav>
+    <button data-tab="devices" class="tab active">Screens</button>
+    <button data-tab="profiles" class="tab">Profiles</button>
+    <button id="logout" class="link">Sign out</button>
+  </nav>
+</header>
+
+<main>
+  <section id="login" hidden>
+    <h2>Sign in</h2>
+    <p>Enter the admin token configured on the server (<code>DOXACAST_ADMIN_TOKEN</code>).</p>
+    <form id="login-form">
+      <input id="token" type="password" autocomplete="current-password" placeholder="Admin token" required>
+      <button type="submit">Sign in</button>
+    </form>
+    <p id="login-error" class="error"></p>
+  </section>
+
+  <section id="devices" hidden>
+    <div class="bar">
+      <h2>Screens</h2>
+      <span id="device-summary" class="muted"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Status</th><th>Name</th><th>Showing</th><th>Profile</th><th>Output</th><th>Last seen</th><th></th>
+        </tr></thead>
+        <tbody id="device-rows"></tbody>
+      </table>
+    </div>
+    <p class="muted">New screens appear here after they enroll with the enrollment token.</p>
+  </section>
+
+  <section id="profiles" hidden>
+    <div class="bar">
+      <h2>Profiles</h2>
+      <button id="new-profile">New profile</button>
+    </div>
+    <div id="profile-list"></div>
+
+    <dialog id="profile-dialog">
+      <form id="profile-form" method="dialog">
+        <h3 id="profile-title">Profile</h3>
+        <label>Name <input name="name" required></label>
+        <fieldset>
+          <legend>Live sources <span class="muted">(lowest priority number wins)</span></legend>
+          <div id="source-rows"></div>
+          <button type="button" id="add-source" class="secondary">Add source</button>
+        </fieldset>
+        <fieldset>
+          <legend>Photo fallback</legend>
+          <label>Album <select name="album"></select></label>
+          <label>Seconds per photo <input name="interval" type="number" min="3" value="10"></label>
+          <label class="inline"><input name="shuffle" type="checkbox"> Shuffle</label>
+        </fieldset>
+        <p id="profile-error" class="error"></p>
+        <div class="actions">
+          <button type="button" id="delete-profile" class="danger">Delete</button>
+          <span class="spacer"></span>
+          <button type="button" id="cancel-profile" class="secondary">Cancel</button>
+          <button type="submit" id="save-profile">Save</button>
+        </div>
+      </form>
+    </dialog>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

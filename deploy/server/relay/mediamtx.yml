@@ -1,0 +1,38 @@
+# mediamtx relay for DoxaCast. OBS publishes once; everyone else reads.
+#
+# OBS publish (Settings > Stream > Custom):
+#   SRT:  srt://<server-ip>:8890?streamid=publish:live&pkt_size=1316
+#   RTMP: rtmp://<server-ip>/live   (stream key empty)
+#
+# Screens read:
+#   multicast: udp://239.10.10.1:5000          (fanout, see on-ready.sh)
+#   SRT:       srt://<server-ip>:8890?streamid=read:live
+#   RTSP:      rtsp://<server-ip>:8554/live
+#   HLS:       http://<server-ip>:8888/live/index.m3u8
+
+logLevel: info
+
+rtsp: yes
+rtspAddress: :8554
+protocols: [tcp]
+
+rtmp: yes
+rtmpAddress: :1935
+
+srt: yes
+srtAddress: :8890
+
+hls: yes
+hlsAddress: :8888
+# Low-latency HLS for smart TVs and the Android app (2-3 s behind live).
+hlsVariant: lowLatency
+hlsSegmentCount: 7
+
+webrtc: no
+
+paths:
+  live:
+    # When OBS starts publishing, start multicast fanout and the Vimeo push.
+    # Both are copies (no transcoding), so CPU use is negligible.
+    runOnReady: /on-ready.sh
+    runOnReadyRestart: yes

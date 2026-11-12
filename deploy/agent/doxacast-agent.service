@@ -1,0 +1,25 @@
+[Unit]
+Description=DoxaCast display agent
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=doxacast
+Group=doxacast
+SupplementaryGroups=video render audio input
+ExecStart=/usr/local/bin/doxacast-agent -config /etc/doxacast/agent.json
+Restart=always
+RestartSec=3
+# The agent caches state and photos here; survives reboots.
+StateDirectory=doxacast
+StateDirectoryMode=0700
+# Hardening: the agent only needs the network, the GPU and its state dir.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/doxacast
+
+[Install]
+WantedBy=multi-user.target
