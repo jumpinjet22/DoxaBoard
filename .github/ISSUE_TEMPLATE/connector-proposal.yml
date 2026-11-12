@@ -8,7 +8,7 @@ body:
       value: |
         Thanks! Before writing code, check whether the system already has an
         **RSS/Atom feed**: if so, the built-in RSS connector may already work.
-        See [docs/connectors.md](https://github.com/jumpinjet22/DoxaCast/blob/main/docs/connectors.md).
+        See [docs/connectors.md](https://github.com/jumpinjet22/DoxaBoard/blob/main/docs/connectors.md).
   - type: input
     id: system
     attributes:

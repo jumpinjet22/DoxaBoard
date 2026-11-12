@@ -1,10 +1,10 @@
 # jsonfeed connector
 
-Reads a URL that serves a [`doxacast.slides/v1`](../../slides/slides.go) feed.
+Reads a URL that serves a [`doxaboard.slides/v1`](../../slides/slides.go) feed.
 
 This is also how you plug in a connector written in **any language**: run it
 as a small HTTP service that returns the feed JSON, and add a `jsonfeed`
-source pointing at it. DoxaCast does the rest (scheduling, caching, images,
+source pointing at it. DoxaBoard does the rest (scheduling, caching, images,
 screens).
 
 - **Status:** official
@@ -28,7 +28,7 @@ The sidecar returns:
 
 ```json
 {
-  "schema": "doxacast.slides/v1",
+  "schema": "doxaboard.slides/v1",
   "slides": [
     {
       "id": "event-4411",

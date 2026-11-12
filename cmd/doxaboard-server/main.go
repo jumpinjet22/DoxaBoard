@@ -1,4 +1,4 @@
-// Command doxacast-server runs the DoxaCast control plane and admin console.
+// Command doxaboard-server runs the DoxaBoard control plane and admin console.
 package main
 
 import (
@@ -14,9 +14,9 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/jumpinjet22/doxacast/connectors/all" // register content connectors
-	"github.com/jumpinjet22/doxacast/internal/content"
-	"github.com/jumpinjet22/doxacast/internal/server"
+	_ "github.com/jumpinjet22/doxaboard/connectors/all" // register content connectors
+	"github.com/jumpinjet22/doxaboard/internal/content"
+	"github.com/jumpinjet22/doxaboard/internal/server"
 )
 
 func env(key, def string) string {
@@ -27,12 +27,12 @@ func env(key, def string) string {
 }
 
 func main() {
-	addr := flag.String("addr", env("DOXACAST_ADDR", ":8080"), "listen address")
-	dbPath := flag.String("db", env("DOXACAST_DB", "doxacast.db"), "SQLite database path")
-	photoDir := flag.String("photos", env("DOXACAST_PHOTO_DIR", ""), "photo directory (one subfolder per album)")
-	dataDir := flag.String("data", env("DOXACAST_DATA_DIR", ""), "directory for the content cache and secret key (default: the database's directory)")
-	keyFile := flag.String("secret-key", env("DOXACAST_SECRET_KEY_FILE", ""), "file holding the key that encrypts connector secrets (created if missing; default: <data>/secret.key)")
-	debug := flag.Bool("debug", os.Getenv("DOXACAST_DEBUG") != "", "verbose logging")
+	addr := flag.String("addr", env("DOXABOARD_ADDR", ":8080"), "listen address")
+	dbPath := flag.String("db", env("DOXABOARD_DB", "doxaboard.db"), "SQLite database path")
+	photoDir := flag.String("photos", env("DOXABOARD_PHOTO_DIR", ""), "photo directory (one subfolder per album)")
+	dataDir := flag.String("data", env("DOXABOARD_DATA_DIR", ""), "directory for the content cache and secret key (default: the database's directory)")
+	keyFile := flag.String("secret-key", env("DOXABOARD_SECRET_KEY_FILE", ""), "file holding the key that encrypts connector secrets (created if missing; default: <data>/secret.key)")
+	debug := flag.Bool("debug", os.Getenv("DOXABOARD_DEBUG") != "", "verbose logging")
 	flag.Parse()
 
 	level := slog.LevelInfo
@@ -42,12 +42,12 @@ func main() {
 	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
 
 	cfg := server.Config{
-		AdminToken:      os.Getenv("DOXACAST_ADMIN_TOKEN"),
-		EnrollmentToken: os.Getenv("DOXACAST_ENROLLMENT_TOKEN"),
+		AdminToken:      os.Getenv("DOXABOARD_ADMIN_TOKEN"),
+		EnrollmentToken: os.Getenv("DOXABOARD_ENROLLMENT_TOKEN"),
 		PhotoDir:        *photoDir,
 	}
 	if len(cfg.AdminToken) < 16 || len(cfg.EnrollmentToken) < 16 {
-		log.Error("DOXACAST_ADMIN_TOKEN and DOXACAST_ENROLLMENT_TOKEN must be set (16+ characters each)")
+		log.Error("DOXABOARD_ADMIN_TOKEN and DOXABOARD_ENROLLMENT_TOKEN must be set (16+ characters each)")
 		os.Exit(2)
 	}
 
@@ -100,7 +100,7 @@ func main() {
 		_ = srv.Shutdown(shutdown)
 	}()
 
-	log.Info("doxacast server listening", "addr", *addr, "db", *dbPath, "photos", *photoDir)
+	log.Info("doxaboard server listening", "addr", *addr, "db", *dbPath, "photos", *photoDir)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Error("server", "err", err)
 		os.Exit(1)

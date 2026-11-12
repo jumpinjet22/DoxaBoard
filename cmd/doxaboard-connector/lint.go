@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const modulePath = "github.com/jumpinjet22/doxacast"
+const modulePath = "github.com/jumpinjet22/doxaboard"
 
 // forbiddenImports can't appear in connector code (tests are exempt).
 // Connectors reach the network only through Deps.HTTP and files only
@@ -33,7 +33,7 @@ var forbiddenImports = map[string]string{
 	"C":             "cgo is not allowed",
 }
 
-// allowedModuleImports are the only DoxaCast packages a connector may use.
+// allowedModuleImports are the only DoxaBoard packages a connector may use.
 var allowedModuleImports = map[string]bool{
 	modulePath + "/connectors/registry": true,
 	modulePath + "/slides":              true,
@@ -49,7 +49,7 @@ func lintCmd(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("lint", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.Usage = func() {
-		fmt.Fprintln(stderr, "usage: doxacast-connector lint <connector-dir>...")
+		fmt.Fprintln(stderr, "usage: doxaboard-connector lint <connector-dir>...")
 		fmt.Fprintln(stderr, "  Checks connector code against the import rules CI enforces.")
 	}
 	if err := fs.Parse(args); err != nil {
@@ -127,7 +127,7 @@ func lintDir(dir string) ([]lintFinding, error) {
 			case strings.HasPrefix(p, modulePath+"/"):
 				if !allowedModuleImports[p] {
 					findings = append(findings, lintFinding{File: path, Line: line, Import: p,
-						Reason: "connectors may only import connectors/registry and slides from DoxaCast"})
+						Reason: "connectors may only import connectors/registry and slides from DoxaBoard"})
 				}
 			case strings.Contains(strings.SplitN(p, "/", 2)[0], "."):
 				findings = append(findings, lintFinding{File: path, Line: line, Import: p, Review: true,

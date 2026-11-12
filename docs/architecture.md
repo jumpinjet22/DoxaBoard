@@ -2,7 +2,7 @@
 
 ## Two planes
 
-**Control plane (central):** `doxacast-server` stores screens, profiles and
+**Control plane (central):** `doxaboard-server` stores screens, profiles and
 photos, and answers one question per screen: *what should you be doing?*
 
 **Data plane (decentralized):** each screen's agent pulls its desired state,
@@ -62,7 +62,7 @@ covered by unit tests.
   (joining also makes IGMP-snooping switches start forwarding); SRT/RTSP use
   `ffprobe`; HLS fetches the playlist.
 - **Storage:** credentials, cached state and photos live in
-  `/var/lib/doxacast`, written atomically so a power cut can't corrupt them.
+  `/var/lib/doxaboard`, written atomically so a power cut can't corrupt them.
 - **Metrics:** link speed, rx/tx errors, drops and CPU temperature go in every
   heartbeat, so you can spot a marginal cable run before anyone complains.
 

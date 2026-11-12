@@ -65,7 +65,7 @@ func (g guardTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	}
 	if r.Header.Get("User-Agent") == "" {
 		r = r.Clone(r.Context())
-		r.Header.Set("User-Agent", "DoxaCast")
+		r.Header.Set("User-Agent", "DoxaBoard")
 	}
 	return g.base.RoundTrip(r)
 }

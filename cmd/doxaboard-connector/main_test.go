@@ -15,8 +15,8 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/jumpinjet22/doxacast/slides"
-	"github.com/jumpinjet22/doxacast/slides/schema"
+	"github.com/jumpinjet22/doxaboard/slides"
+	"github.com/jumpinjet22/doxaboard/slides/schema"
 )
 
 func pngBytes(w, h int) []byte {
@@ -39,7 +39,7 @@ func TestCheckFeedGood(t *testing.T) {
 		switch r.URL.Path {
 		case "/feed":
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(`{"schema":"doxacast.slides/v1","slides":[
+			w.Write([]byte(`{"schema":"doxaboard.slides/v1","slides":[
 				{"id":"a","title":"Welcome","image":{"url":"/img/hd.png","alt":"x"}},
 				{"id":"b","title":"Square","image":{"url":"/img/square.png","alt":"y"}}]}`))
 		case "/img/hd.png":
@@ -72,10 +72,10 @@ func TestCheckFeedCatchesProblems(t *testing.T) {
 		case "/unstable":
 			// New IDs on every request: the classic bug.
 			i := n.Add(1)
-			w.Write([]byte(`{"schema":"doxacast.slides/v1","slides":[{"id":"x` +
+			w.Write([]byte(`{"schema":"doxaboard.slides/v1","slides":[{"id":"x` +
 				string('0'+i) + `","title":"Hi"}]}`))
 		case "/notimage":
-			w.Write([]byte(`{"schema":"doxacast.slides/v1","slides":[{"id":"a","image":{"url":"/page","alt":"x"}}]}`))
+			w.Write([]byte(`{"schema":"doxaboard.slides/v1","slides":[{"id":"a","image":{"url":"/page","alt":"x"}}]}`))
 		case "/page":
 			w.Write([]byte("<html>nope</html>"))
 		case "/badschema":
@@ -102,7 +102,7 @@ func TestCheckFeedCatchesProblems(t *testing.T) {
 
 func TestCheckFeedJSONAndFile(t *testing.T) {
 	f := filepath.Join(t.TempDir(), "feed.json")
-	os.WriteFile(f, []byte(`{"schema":"doxacast.slides/v1","slides":[{"id":"a","title":"x"}]}`), 0o644)
+	os.WriteFile(f, []byte(`{"schema":"doxaboard.slides/v1","slides":[{"id":"a","title":"x"}]}`), 0o644)
 	code, out := runCLI("check-feed", "-json", f)
 	if code != 0 {
 		t.Fatalf("exit %d: %s", code, out)

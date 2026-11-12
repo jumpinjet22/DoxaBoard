@@ -1,6 +1,6 @@
 "use strict";
 
-const TOKEN_KEY = "doxacast.adminToken";
+const TOKEN_KEY = "doxaboard.adminToken";
 let token = "";
 try { token = localStorage.getItem(TOKEN_KEY) || ""; } catch (_) {}
 

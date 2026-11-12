@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jumpinjet22/doxacast/core"
+	"github.com/jumpinjet22/doxaboard/core"
 )
 
 // Prober checks sources without playing them.

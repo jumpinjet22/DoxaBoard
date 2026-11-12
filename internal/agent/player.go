@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/jumpinjet22/doxacast/core"
+	"github.com/jumpinjet22/doxaboard/core"
 )
 
 // Player plays live sources with mpv.

@@ -1,6 +1,6 @@
 # Connectors
 
-Connectors bring content into DoxaCast: announcements from Rock RMS, posts from
+Connectors bring content into DoxaBoard: announcements from Rock RMS, posts from
 WordPress, photos from a folder, anything with a feed. This page is for people
 who want to **use** one, **write** one, or **get one listed**.
 
@@ -21,7 +21,7 @@ and screens using that profile show its slides whenever nothing is live.
 ## How content flows
 
 ```
-CMS ──▶ connector ──▶ DoxaCast server (validates, caches images) ──▶ screens
+CMS ──▶ connector ──▶ DoxaBoard server (validates, caches images) ──▶ screens
 ```
 
 Screens never talk to a CMS. The server pulls slides, checks them, downloads
@@ -33,8 +33,8 @@ screens keep showing the last good slides.
 | | Who runs the code | Language | Approval |
 |---|---|---|---|
 | **Feed** (RSS/Atom, JSON feed, folder) | nobody: it's built in | none | none |
-| **Sidecar** | you, next to DoxaCast | any | optional listing |
-| **In-tree** | DoxaCast itself | Go | PR + maintainer review |
+| **Sidecar** | you, next to DoxaBoard | any | optional listing |
+| **In-tree** | DoxaBoard itself | Go | PR + maintainer review |
 
 Start at the top. Most CMSes already publish an RSS feed, and if yours does,
 you're done. If not, a sidecar is usually the fastest path: a small service in
@@ -45,11 +45,11 @@ for widely used systems that deserve first-class support.
 
 ## The slide feed
 
-Everything speaks one format: `doxacast.slides/v1`.
+Everything speaks one format: `doxaboard.slides/v1`.
 
 ```json
 {
-  "schema": "doxacast.slides/v1",
+  "schema": "doxaboard.slides/v1",
   "slides": [
     {
       "id": "rock-1234",
@@ -83,12 +83,12 @@ Everything speaks one format: `doxacast.slides/v1`.
 Feed limits: 4 MiB of JSON, 500 slides.
 
 **Compatibility:** v1 may gain new optional fields, so readers must ignore
-fields they don't know. Anything breaking becomes `doxacast.slides/v2`, and the
+fields they don't know. Anything breaking becomes `doxaboard.slides/v2`, and the
 server will accept both for a transition period.
 
 The JSON Schema is at
-[`slides/schema/doxacast.slides.v1.schema.json`](../slides/schema/doxacast.slides.v1.schema.json)
-(or `doxacast-connector schema`), for validating in any language. Some rules
+[`slides/schema/doxaboard.slides.v1.schema.json`](../slides/schema/doxaboard.slides.v1.schema.json)
+(or `doxaboard-connector schema`), for validating in any language. Some rules
 (unique and stable ids, dates in order) can't be expressed in JSON Schema;
 `check-feed` covers those.
 
@@ -112,7 +112,7 @@ Rules that matter:
 Check it:
 
 ```sh
-doxacast-connector check-feed http://localhost:8090/feed
+doxaboard-connector check-feed http://localhost:8090/feed
 ```
 
 `check-feed` validates the schema, fetches twice to make sure ids are stable,
@@ -120,7 +120,7 @@ downloads every image to confirm it's really an image and how big it is, and
 times the response. It exits non-zero on errors, so you can use it in your own
 CI. Add `-strict` to fail on warnings too, and `-json` for machine-readable output.
 
-Then add a **JSON feed** source in the DoxaCast console pointing at your sidecar.
+Then add a **JSON feed** source in the DoxaBoard console pointing at your sidecar.
 
 ### Getting listed
 
@@ -132,7 +132,7 @@ feed URL. A maintainer runs `check-feed` on it and adds you to
 PR automatically, plus a nightly job that re-checks listed feeds and flags any
 that break.
 
-DoxaCast never runs sidecar code, so listing is quick. It's your code, your
+DoxaBoard never runs sidecar code, so listing is quick. It's your code, your
 credentials and your responsibility.
 
 ---
@@ -147,7 +147,7 @@ who will maintain it. Sometimes the answer is "that CMS already has an RSS feed.
 ### 2. Scaffold it
 
 ```sh
-go run ./cmd/doxacast-connector new planning-center
+go run ./cmd/doxaboard-connector new planning-center
 ```
 
 This creates `connectors/planningcenter/` with a working connector, a test that
@@ -183,7 +183,7 @@ type Source interface {
 
 Connector code (not tests) **may not** import `os`, `os/exec`, `net` (but
 `net/http` and `net/url` are fine), `unsafe`, `syscall`, `plugin`, cgo, or any
-DoxaCast package except `connectors/registry` and `slides`. **Third-party
+DoxaBoard package except `connectors/registry` and `slides`. **Third-party
 modules** need maintainer review (license, security, upkeep), so prefer the
 standard library.
 
@@ -197,7 +197,7 @@ CI instead of relying on a reviewer to notice.
 make connector-check NAME=planningcenter
 ```
 
-That's exactly what CI runs: gofmt, vet, `doxacast-connector lint` (imports and
+That's exactly what CI runs: gofmt, vet, `doxaboard-connector lint` (imports and
 required files), and your tests with the race detector. Your tests must call
 `connectortest.Run`, which checks that your connector:
 
@@ -221,7 +221,7 @@ the connector's maintainer in `CODEOWNERS`.
 
 | Status | Meaning |
 |---|---|
-| `official` | Maintained by DoxaCast maintainers |
+| `official` | Maintained by DoxaBoard maintainers |
 | `community` | Maintained by its listed maintainer |
 | `experimental` | New or incomplete; may change |
 
@@ -233,6 +233,6 @@ connector nobody looks after.
 
 ## Stability
 
-DoxaCast is pre-1.0. The slide feed format (`doxacast.slides/v1`) is the
+DoxaBoard is pre-1.0. The slide feed format (`doxaboard.slides/v1`) is the
 stable contract. The Go connector interface may still change before 1.0, and
 any change will come with migration notes and updates to every in-tree connector.

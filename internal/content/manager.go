@@ -17,8 +17,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jumpinjet22/doxacast/connectors/registry"
-	"github.com/jumpinjet22/doxacast/slides"
+	"github.com/jumpinjet22/doxaboard/connectors/registry"
+	"github.com/jumpinjet22/doxaboard/slides"
 )
 
 // Source is a configured content source with its secrets already decrypted.

@@ -10,10 +10,10 @@ import (
 // never panic, and every slide Usable returns must pass validation on its
 // own, sorted by Order.
 func FuzzParseValidate(f *testing.F) {
-	f.Add([]byte(`{"schema":"doxacast.slides/v1","slides":[{"id":"a","title":"Hi"}]}`))
-	f.Add([]byte(`{"schema":"doxacast.slides/v1","slides":[{"id":"a","image":{"url":"/x.jpg","alt":"x"},"order":5},{"id":"a","title":"dup","order":1}]}`))
-	f.Add([]byte(`{"schema":"doxacast.slides/v1","slides":[{"id":"b","title":"t","starts_at":"2026-01-02T00:00:00Z","expires_at":"2026-01-01T00:00:00Z"}]}`))
-	f.Add([]byte(`{"schema":"doxacast.slides/v2"}`))
+	f.Add([]byte(`{"schema":"doxaboard.slides/v1","slides":[{"id":"a","title":"Hi"}]}`))
+	f.Add([]byte(`{"schema":"doxaboard.slides/v1","slides":[{"id":"a","image":{"url":"/x.jpg","alt":"x"},"order":5},{"id":"a","title":"dup","order":1}]}`))
+	f.Add([]byte(`{"schema":"doxaboard.slides/v1","slides":[{"id":"b","title":"t","starts_at":"2026-01-02T00:00:00Z","expires_at":"2026-01-01T00:00:00Z"}]}`))
+	f.Add([]byte(`{"schema":"doxaboard.slides/v2"}`))
 	f.Add([]byte(`{"slides":[{"id":"x","tags":["a b"],"duration_seconds":-4}]}`))
 	f.Add([]byte(`not json`))
 

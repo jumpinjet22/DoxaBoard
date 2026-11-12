@@ -1,12 +1,12 @@
-// Command doxacast-connector helps people build DoxaCast connectors.
+// Command doxaboard-connector helps people build DoxaBoard connectors.
 //
-//	doxacast-connector check-feed <url|file|->   validate a slide feed (sidecar connectors)
-//	doxacast-connector new <name>                scaffold an in-tree Go connector
-//	doxacast-connector lint <dir>...             check a connector's imports and files
-//	doxacast-connector schema                    print the feed's JSON Schema
-//	doxacast-connector version
+//	doxaboard-connector check-feed <url|file|->   validate a slide feed (sidecar connectors)
+//	doxaboard-connector new <name>                scaffold an in-tree Go connector
+//	doxaboard-connector lint <dir>...             check a connector's imports and files
+//	doxaboard-connector schema                    print the feed's JSON Schema
+//	doxaboard-connector version
 //
-// The same checks run in DoxaCast's CI, so if it passes here it passes there.
+// The same checks run in DoxaBoard's CI, so if it passes here it passes there.
 package main
 
 import (
@@ -14,26 +14,26 @@ import (
 	"io"
 	"os"
 
-	"github.com/jumpinjet22/doxacast/slides/schema"
+	"github.com/jumpinjet22/doxaboard/slides/schema"
 )
 
 var version = "dev"
 
-const usage = `doxacast-connector: tools for building DoxaCast connectors
+const usage = `doxaboard-connector: tools for building DoxaBoard connectors
 
 Usage:
-  doxacast-connector check-feed [flags] <url | file | ->
-      Validate a doxacast.slides/v1 feed: schema, stable IDs, images.
+  doxaboard-connector check-feed [flags] <url | file | ->
+      Validate a doxaboard.slides/v1 feed: schema, stable IDs, images.
       Run it against your sidecar connector before you list it.
-  doxacast-connector new [-dir connectors] <name>
+  doxaboard-connector new [-dir connectors] <name>
       Scaffold an in-tree Go connector that already passes the conformance kit.
-  doxacast-connector lint <connector-dir>...
+  doxaboard-connector lint <connector-dir>...
       Check a Go connector against the import rules CI enforces.
-  doxacast-connector schema
+  doxaboard-connector schema
       Print the JSON Schema for the feed (validate in any language).
-  doxacast-connector version
+  doxaboard-connector version
 
-Run "doxacast-connector <command> -h" for a command's flags.
+Run "doxaboard-connector <command> -h" for a command's flags.
 `
 
 func main() {

@@ -1,4 +1,4 @@
-# Contributing to DoxaCast
+# Contributing to DoxaBoard
 
 Thanks for helping! A few things keep this project healthy.
 
@@ -35,7 +35,7 @@ See [docs/connectors.md](docs/connectors.md). In short:
 - Most CMSes need **no code**: try the RSS or JSON feed connectors first.
 - **Sidecar** connectors (any language) live in your own repo; get listed with a "List my connector" issue.
 - **In-tree** Go connectors start with a "Connector proposal" issue, then
-  `go run ./cmd/doxacast-connector new <name>`, then `make connector-check NAME=<name>`.
+  `go run ./cmd/doxaboard-connector new <name>`, then `make connector-check NAME=<name>`.
 
 ## Sign your commits (DCO)
 

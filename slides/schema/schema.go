@@ -4,7 +4,7 @@ package schema
 
 import _ "embed"
 
-// V1 is the JSON Schema (draft 2020-12) for doxacast.slides/v1.
+// V1 is the JSON Schema (draft 2020-12) for doxaboard.slides/v1.
 //
-//go:embed doxacast.slides.v1.schema.json
+//go:embed doxaboard.slides.v1.schema.json
 var V1 []byte

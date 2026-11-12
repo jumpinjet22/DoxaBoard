@@ -7,10 +7,10 @@ RUN go mod download
 COPY . .
 ARG VERSION=dev
 RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" \
-    -o /out/doxacast-server ./cmd/doxacast-server
+    -o /out/doxaboard-server ./cmd/doxaboard-server
 
 FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab
-COPY --from=build /out/doxacast-server /doxacast-server
+COPY --from=build /out/doxaboard-server /doxaboard-server
 EXPOSE 8080
 USER nonroot
-ENTRYPOINT ["/doxacast-server"]
+ENTRYPOINT ["/doxaboard-server"]

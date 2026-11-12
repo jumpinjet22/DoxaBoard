@@ -4,11 +4,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jumpinjet22/doxacast/connectors/connectortest"
-	"github.com/jumpinjet22/doxacast/connectors/registry"
+	"github.com/jumpinjet22/doxaboard/connectors/connectortest"
+	"github.com/jumpinjet22/doxaboard/connectors/registry"
 )
 
-// TestConformance runs the DoxaCast conformance kit against recorded
+// TestConformance runs the DoxaBoard conformance kit against recorded
 // responses in testdata/. No network, no real credentials.
 func TestConformance(t *testing.T) {
 	items, err := os.ReadFile("testdata/items.json")

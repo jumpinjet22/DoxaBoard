@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""A DoxaCast sidecar connector in plain Python (standard library only).
+"""A DoxaBoard sidecar connector in plain Python (standard library only).
 
-It serves a doxacast.slides/v1 feed at http://<host>:8090/feed. In DoxaCast,
+It serves a doxaboard.slides/v1 feed at http://<host>:8090/feed. In DoxaBoard,
 add a "JSON feed" source pointing at that URL.
 
 Copy this file, replace fetch_items() with calls to your CMS, and keep
 to_slide() returning the same shape. Check your work with:
 
-    doxacast-connector check-feed http://localhost:8090/feed
+    doxaboard-connector check-feed http://localhost:8090/feed
 """
 
 import hashlib
@@ -18,15 +18,15 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PORT = int(os.environ.get("PORT", "8090"))
-# Optional: require DoxaCast to send "Authorization: Bearer <token>".
+# Optional: require DoxaBoard to send "Authorization: Bearer <token>".
 TOKEN = os.environ.get("FEED_TOKEN", "")
-# Cache upstream results so DoxaCast polling doesn't hammer your CMS.
+# Cache upstream results so DoxaBoard polling doesn't hammer your CMS.
 CACHE_SECONDS = int(os.environ.get("CACHE_SECONDS", "60"))
 
 
 def fetch_items():
     """Replace this with your CMS. Raise an exception if the CMS fails:
-    the sidecar then returns HTTP 502 and DoxaCast keeps its last good slides
+    the sidecar then returns HTTP 502 and DoxaBoard keeps its last good slides
     instead of blanking every screen."""
     return [
         {
@@ -75,7 +75,7 @@ def build_feed():
         return _cache["body"]
     items = fetch_items()
     feed = {
-        "schema": "doxacast.slides/v1",
+        "schema": "doxaboard.slides/v1",
         "slides": [to_slide(it, i) for i, it in enumerate(items)],
     }
     body = json.dumps(feed).encode("utf-8")
@@ -117,5 +117,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"DoxaCast sidecar on :{PORT} (GET /feed)", flush=True)
+    print(f"DoxaBoard sidecar on :{PORT} (GET /feed)", flush=True)
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()

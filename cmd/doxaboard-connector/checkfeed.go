@@ -19,7 +19,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jumpinjet22/doxacast/slides"
+	"github.com/jumpinjet22/doxaboard/slides"
 )
 
 const (
@@ -58,9 +58,9 @@ func checkFeedCmd(args []string, stdout, stderr io.Writer) int {
 	asJSON := fs.Bool("json", false, "print a JSON report")
 	strict := fs.Bool("strict", false, "treat warnings as errors")
 	noImages := fs.Bool("no-images", false, "skip downloading and checking images")
-	token := fs.String("token", os.Getenv("DOXACAST_FEED_TOKEN"), "bearer token for the feed (or DOXACAST_FEED_TOKEN)")
+	token := fs.String("token", os.Getenv("DOXABOARD_FEED_TOKEN"), "bearer token for the feed (or DOXABOARD_FEED_TOKEN)")
 	fs.Usage = func() {
-		fmt.Fprintln(stderr, "usage: doxacast-connector check-feed [flags] <url | file | ->")
+		fmt.Fprintln(stderr, "usage: doxaboard-connector check-feed [flags] <url | file | ->")
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
@@ -123,7 +123,7 @@ func (c *checker) load(ctx context.Context, stdin io.Reader) ([]byte, http.Heade
 		return nil, nil, err
 	}
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "DoxaCast-check-feed/"+version)
+	req.Header.Set("User-Agent", "DoxaBoard-check-feed/"+version)
 	if c.token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
@@ -263,7 +263,7 @@ func (c *checker) checkImage(ctx context.Context, i int, id, u string) {
 		c.problem(slides.Error, i, id, "image.url", "%v", err)
 		return
 	}
-	req.Header.Set("User-Agent", "DoxaCast-check-feed/"+version)
+	req.Header.Set("User-Agent", "DoxaBoard-check-feed/"+version)
 	resp, err := c.client.Do(req)
 	if err != nil {
 		c.problem(slides.Error, i, id, "image.url", "could not download: %v", err)
@@ -338,7 +338,7 @@ func (c *checker) print(w io.Writer) {
 	}
 	fmt.Fprintf(w, "\n  %d errors, %d warnings\n\n", c.rep.Errors, c.rep.Warnings)
 	if c.rep.OK {
-		fmt.Fprintln(w, "✓ Feed works with DoxaCast "+slides.SchemaV1)
+		fmt.Fprintln(w, "✓ Feed works with DoxaBoard "+slides.SchemaV1)
 	} else {
 		fmt.Fprintln(w, "✗ Fix the errors above, then run this again.")
 	}

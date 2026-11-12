@@ -1,14 +1,14 @@
-// Package slides defines the DoxaCast slide feed: the contract between
+// Package slides defines the DoxaBoard slide feed: the contract between
 // content sources (Rock, WordPress, RSS, folders, sidecar connectors in any
-// language) and the DoxaCast server.
+// language) and the DoxaBoard server.
 //
 // The wire format is JSON:
 //
-//	{"schema": "doxacast.slides/v1", "slides": [{"id": "...", "title": "..."}]}
+//	{"schema": "doxaboard.slides/v1", "slides": [{"id": "...", "title": "..."}]}
 //
 // Compatibility rules for v1: new optional fields may be added; readers must
 // ignore fields they don't know. Anything that would break an existing feed
-// or reader requires doxacast.slides/v2.
+// or reader requires doxaboard.slides/v2.
 package slides
 
 import (
@@ -20,7 +20,7 @@ import (
 )
 
 // SchemaV1 identifies version 1 of the feed format.
-const SchemaV1 = "doxacast.slides/v1"
+const SchemaV1 = "doxaboard.slides/v1"
 
 // Limits enforced by Validate. Generous for real content, tight enough that
 // a broken source can't flood screens or the server.

@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/jumpinjet22/DoxaCast/blob/main/slides/schema/doxacast.slides.v1.schema.json",
-  "title": "DoxaCast slide feed v1",
-  "description": "Content for DoxaCast screens. Readers ignore unknown fields. Some rules (unique ids, expires_at after starts_at, plain-text body) can't be expressed here; run `doxacast-connector check-feed` for the full check.",
+  "$id": "https://github.com/jumpinjet22/DoxaBoard/blob/main/slides/schema/doxaboard.slides.v1.schema.json",
+  "title": "DoxaBoard slide feed v1",
+  "description": "Content for DoxaBoard screens. Readers ignore unknown fields. Some rules (unique ids, expires_at after starts_at, plain-text body) can't be expressed here; run `doxaboard-connector check-feed` for the full check.",
   "type": "object",
   "required": ["schema", "slides"],
   "properties": {
-    "schema": { "const": "doxacast.slides/v1" },
+    "schema": { "const": "doxaboard.slides/v1" },
     "slides": {
       "type": "array",
       "maxItems": 500,

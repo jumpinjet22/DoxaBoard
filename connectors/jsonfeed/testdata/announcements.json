@@ -1,5 +1,5 @@
 {
-  "schema": "doxacast.slides/v1",
+  "schema": "doxaboard.slides/v1",
   "generator": "rock-sidecar 0.3.1",
   "slides": [
     {

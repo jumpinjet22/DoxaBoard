@@ -4,7 +4,7 @@ labels: [enhancement, needs-triage]
 body:
   - type: markdown
     attributes:
-      value: Check the [roadmap](https://github.com/jumpinjet22/DoxaCast/blob/main/ROADMAP.md) first. It might already be planned.
+      value: Check the [roadmap](https://github.com/jumpinjet22/DoxaBoard/blob/main/ROADMAP.md) first. It might already be planned.
   - type: dropdown
     id: area
     attributes:

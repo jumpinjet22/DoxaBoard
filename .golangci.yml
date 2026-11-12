@@ -36,7 +36,7 @@ linters:
       - path: _test\.go
         linters: [errcheck, gosec, bodyclose, noctx]
       # Generated-code templates aren't compiled here.
-      - path: cmd/doxacast-connector/templates/
+      - path: cmd/doxaboard-connector/templates/
         linters: [all]
 
 formatters:

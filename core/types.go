@@ -1,4 +1,4 @@
-// Package core is the platform-independent brain of a DoxaCast display.
+// Package core is the platform-independent brain of a DoxaBoard display.
 //
 // It knows how to fetch and cache desired state from the server, decide which
 // source a screen should show (failover), and report health. It contains no

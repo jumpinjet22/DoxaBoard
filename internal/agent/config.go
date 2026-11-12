@@ -12,9 +12,9 @@ import (
 	"strings"
 )
 
-// Config is /etc/doxacast/agent.json.
+// Config is /etc/doxaboard/agent.json.
 type Config struct {
-	// ServerURL is the control plane, e.g. http://doxacast.local:8080.
+	// ServerURL is the control plane, e.g. http://doxaboard.local:8080.
 	ServerURL string `json:"server_url"`
 	// EnrollmentToken is used once to register; credentials are then saved
 	// in DataDir and the token can be removed from this file.
@@ -46,7 +46,7 @@ func LoadConfig(path string) (Config, error) {
 		return c, errors.New("server_url is required")
 	}
 	if c.DataDir == "" {
-		c.DataDir = "/var/lib/doxacast"
+		c.DataDir = "/var/lib/doxaboard"
 	}
 	if c.MpvPath == "" {
 		c.MpvPath = "mpv"

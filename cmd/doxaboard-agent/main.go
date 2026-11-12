@@ -1,4 +1,4 @@
-// Command doxacast-agent runs on each screen (Raspberry Pi or any Linux box).
+// Command doxaboard-agent runs on each screen (Raspberry Pi or any Linux box).
 // It enrolls with the server once, then keeps the screen showing the best
 // available source, even when the server is unreachable.
 package main
@@ -19,15 +19,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jumpinjet22/doxacast/core"
-	"github.com/jumpinjet22/doxacast/internal/agent"
+	"github.com/jumpinjet22/doxaboard/core"
+	"github.com/jumpinjet22/doxaboard/internal/agent"
 )
 
 // version is set at build time with -ldflags "-X main.version=...".
 var version = "dev"
 
 func main() {
-	cfgPath := flag.String("config", "/etc/doxacast/agent.json", "config file")
+	cfgPath := flag.String("config", "/etc/doxaboard/agent.json", "config file")
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
 	if *showVersion {
@@ -48,7 +48,7 @@ func main() {
 	if err != nil {
 		logger.Fatalf("enroll: %v", err)
 	}
-	logger.Printf("doxacast agent %s, device %s, server %s", version, creds.DeviceID, cfg.ServerURL)
+	logger.Printf("doxaboard agent %s, device %s, server %s", version, creds.DeviceID, cfg.ServerURL)
 
 	httpClient := &http.Client{Timeout: 60 * time.Second}
 	var display atomic.Value
