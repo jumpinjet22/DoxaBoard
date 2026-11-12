@@ -21,6 +21,7 @@ import (
 
 	"github.com/jumpinjet22/doxaboard/core"
 	"github.com/jumpinjet22/doxaboard/internal/agent"
+	"github.com/jumpinjet22/doxaboard/internal/logsafe"
 )
 
 // version is set at build time with -ldflags "-X main.version=...".
@@ -50,6 +51,10 @@ func main() {
 	}
 	logger.Printf("doxaboard agent %s, device %s, server %s", version, creds.DeviceID, cfg.ServerURL)
 
+	// Engine, player and slideshow logs carry text from the network (errors,
+	// URLs, IDs): clean it before it reaches the journal.
+	logf := logsafe.Printf(func(m string) { logger.Print(m) })
+
 	httpClient := &http.Client{Timeout: 60 * time.Second}
 	var display atomic.Value
 	display.Store(core.DisplaySpec{})
@@ -57,7 +62,7 @@ func main() {
 	engine := &core.Engine{
 		Client: core.NewClient(cfg.ServerURL, creds.DeviceToken),
 		Store:  agent.FileStore{Dir: cfg.DataDir},
-		Player: &agent.Player{MpvPath: cfg.MpvPath, MpvArgs: cfg.MpvArgs, Logf: logger.Printf},
+		Player: &agent.Player{MpvPath: cfg.MpvPath, MpvArgs: cfg.MpvArgs, Logf: logf},
 		Slideshow: &agent.Slideshow{
 			ServerURL: cfg.ServerURL,
 			Token:     creds.DeviceToken,
@@ -65,7 +70,7 @@ func main() {
 			MpvPath:   cfg.MpvPath,
 			MpvArgs:   cfg.MpvArgs,
 			HTTP:      httpClient,
-			Logf:      logger.Printf,
+			Logf:      logf,
 			Display:   func() core.DisplaySpec { return display.Load().(core.DisplaySpec) },
 		},
 		Prober: &agent.Prober{
@@ -76,7 +81,7 @@ func main() {
 		Platform:     runtime.GOOS + "/" + runtime.GOARCH,
 		Version:      version,
 		Metrics:      func() map[string]float64 { return agent.Metrics(cfg.Interface) },
-		Logf:         logger.Printf,
+		Logf:         logf,
 		OnState:      func(st core.DesiredState) { display.Store(st.Display) },
 		TickInterval: 5 * time.Second,
 		ProbeTimeout: 4 * time.Second,
@@ -117,7 +122,7 @@ func enroll(ctx context.Context, cfg agent.Config, logger *log.Logger) (agent.Cr
 			logger.Printf("enrolled as %s", creds.DeviceID)
 			return creds, nil
 		}
-		logger.Printf("enrollment failed, retrying in %s: %v", backoff, err)
+		logger.Printf("enrollment failed, retrying in %s: %s", backoff, logsafe.Clean(err.Error()))
 		select {
 		case <-ctx.Done():
 			return creds, ctx.Err()

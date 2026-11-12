@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -16,6 +15,7 @@ import (
 
 	_ "github.com/jumpinjet22/doxaboard/connectors/all" // register content connectors
 	"github.com/jumpinjet22/doxaboard/internal/content"
+	"github.com/jumpinjet22/doxaboard/internal/logsafe"
 	"github.com/jumpinjet22/doxaboard/internal/server"
 )
 
@@ -77,7 +77,8 @@ func main() {
 	cfg.Content = &content.Manager{
 		Dir:   filepath.Join(*dataDir, "content"),
 		Style: content.DefaultTextStyle,
-		Logf:  func(f string, a ...any) { log.Info(fmt.Sprintf(f, a...)) },
+		// Content logs carry text from remote feeds: clean it.
+		Logf: logsafe.Printf(func(m string) { log.Info(m) }),
 	}
 	if *photoDir != "" {
 		cfg.Content.Files = os.DirFS(*photoDir)

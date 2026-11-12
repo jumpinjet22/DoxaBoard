@@ -13,6 +13,7 @@ import (
 
 	"github.com/jumpinjet22/doxaboard/connectors/registry"
 	"github.com/jumpinjet22/doxaboard/internal/content"
+	"github.com/jumpinjet22/doxaboard/internal/logsafe"
 )
 
 // slideshowManifestPath is where screens get their merged slideshow.
@@ -145,7 +146,7 @@ func (s *Server) saveSource(w http.ResponseWriter, r *http.Request) {
 	bg := context.WithoutCancel(r.Context())
 	go func() {
 		if _, err := s.refreshSource(bg, row.ID); err != nil {
-			s.log.Error("initial fetch", "source", row.ID, "err", err)
+			s.log.Error("initial fetch", "source", row.ID, "err", logsafe.Clean(err.Error()))
 		}
 	}()
 	writeJSON(w, http.StatusOK, s.view(*row))
@@ -216,7 +217,7 @@ func (s *Server) deleteSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.cfg.Content.Remove(id); err != nil {
-		s.log.Warn("removing source cache", "id", id, "err", err)
+		s.log.Warn("removing source cache", "id", logsafe.Clean(id), "err", logsafe.Clean(err.Error()))
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -342,7 +343,7 @@ func (s *Server) RunContent(ctx context.Context) {
 	for {
 		rows, err := s.store.ListSources(ctx)
 		if err != nil && ctx.Err() == nil {
-			s.log.Error("listing sources", "err", err)
+			s.log.Error("listing sources", "err", logsafe.Clean(err.Error()))
 		}
 		for _, row := range rows {
 			if ctx.Err() != nil {
@@ -352,7 +353,7 @@ func (s *Server) RunContent(ctx context.Context) {
 				continue
 			}
 			if _, err := s.refreshSource(ctx, row.ID); err != nil {
-				s.log.Error("refreshing source", "id", row.ID, "err", err)
+				s.log.Error("refreshing source", "id", row.ID, "err", logsafe.Clean(err.Error()))
 			}
 		}
 		select {
@@ -386,7 +387,7 @@ func (s *Server) deviceSlideshow(w http.ResponseWriter, r *http.Request) {
 		for _, id := range p.SourceIDs {
 			cached, err := s.cfg.Content.Slides(id)
 			if err != nil {
-				s.log.Warn("reading cached slides", "source", id, "err", err)
+				s.log.Warn("reading cached slides", "source", id, "err", logsafe.Clean(err.Error()))
 				continue
 			}
 			for _, c := range cached {
