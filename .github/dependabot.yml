@@ -27,6 +27,13 @@ updates:
       interval: weekly
     labels: [dependencies, docker]
 
+  # Sidecar example base image
+  - package-ecosystem: docker
+    directory: /examples/sidecar-python
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
+
   # Images in docker-compose.yml (mediamtx, rclone)
   - package-ecosystem: docker-compose
     directory: /deploy/server
