@@ -65,7 +65,7 @@ func (c Connector) New(cfg registry.Config, deps registry.Deps) (registry.Source
 	}
 	u, err := url.Parse(cfg["url"])
 	if err != nil {
-		return nil, fmt.Errorf("rss: feed URL: %v", err)
+		return nil, fmt.Errorf("rss: feed URL: %w", err)
 	}
 	maxItems, _ := strconv.Atoi(cfg["max_items"])
 	if maxItems < 1 || maxItems > slides.MaxSlides {
