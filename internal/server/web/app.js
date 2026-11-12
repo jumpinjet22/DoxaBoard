@@ -45,11 +45,12 @@ async function api(method, path, body) {
 // ---- navigation ----
 
 function showTab(name) {
-  for (const s of ["login", "devices", "profiles", "content"]) $("#" + s).hidden = s !== name;
+  for (const s of ["login", "live", "devices", "profiles", "content"]) $("#" + s).hidden = s !== name;
   document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
   if (name === "devices") loadDevices();
   if (name === "profiles") loadProfiles();
   if (name === "content") loadContent();
+  if (name === "live") loadLive();
 }
 
 function showLogin() {
@@ -403,3 +404,185 @@ $("#content-form").addEventListener("submit", async (e) => {
     $("#content-error").textContent = err.message;
   }
 });
+
+// ---- live broadcast ----
+
+let broadcasts = [];
+let schedule = { slots: [], specials: [] };
+let editingBroadcast = null;
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function fmtTime(iso) {
+  return new Date(iso).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+async function liveAction(path, confirmText) {
+  if (confirmText && !confirm(confirmText)) return;
+  $("#live-error").textContent = "";
+  try { await api("POST", path); }
+  catch (err) { $("#live-error").textContent = err.message; }
+  renderLiveStatus();
+}
+
+async function renderLiveStatus() {
+  let st;
+  try { st = await api("GET", "/api/v1/live/status"); }
+  catch (err) { $("#live-status").replaceChildren(h("p", { class: "error" }, err.message)); return; }
+  $("#live-tz").textContent = "Schedule time zone: " + st.time_zone;
+
+  const head = h("div", { class: "live-head" },
+    h("span", { class: "live-badge" + (st.live ? " on" : "") }, st.live ? "● LIVE" : "OFF AIR"),
+    st.live ? h("strong", {}, st.broadcast.name) : null,
+    st.live ? h("span", { class: "muted" }, "since " + fmtTime(st.started_at)) : null);
+  const obs = h("div", { class: "status-line" + (st.obs.ready ? "" : " bad") },
+    h("span", { class: "dot " + (st.obs.ready ? "ok" : "bad") }),
+    st.relay_error ? "Relay: " + st.relay_error : st.obs.ready ? "OBS is sending to the relay" : "OBS is not sending");
+  const outs = st.outputs.map((o) => h("div", { class: "out-line" },
+    h("span", { class: "dot " + (o.state === "forwarding" ? "ok" : o.state === "error" ? "bad" : "warn") }),
+    `${o.label} (${o.host}): ${o.state || "starting"}` + (o.last_error ? ` · ${o.last_error}` : "")));
+
+  const actions = h("div", { class: "live-actions" });
+  if (st.live) {
+    actions.append(h("button", { class: "danger", onclick: () => liveAction("/api/v1/live/stop", `End ${st.broadcast.name}? Screens in the building keep playing.`) }, "End broadcast"));
+  } else {
+    if (st.scheduled) {
+      const label = st.scheduled.special && st.scheduled.label ? `${st.scheduled.label} (${st.scheduled.name})` : st.scheduled.name;
+      actions.append(h("button", { class: "go", onclick: () => liveAction("/api/v1/live/start?broadcast=auto", `Go live to ${label}?`) }, `Go live → ${label}`));
+    }
+    for (const b of broadcasts) {
+      actions.append(h("button", { class: "secondary", onclick: () => liveAction("/api/v1/live/start?broadcast=" + encodeURIComponent(b.id), `Go live to ${b.name}?`) }, `Go live: ${b.name}`));
+    }
+    if (!broadcasts.length) actions.append(h("span", { class: "muted" }, "Add a broadcast below to go live."));
+  }
+  const upcoming = st.upcoming.length
+    ? h("div", { class: "status-line" }, "Next: " + st.upcoming.slice(0, 3).map((u) =>
+        `${u.special && u.label ? u.label + " · " : ""}${u.name} ${fmtTime(u.start)}`).join(" · "))
+    : null;
+  $("#live-status").replaceChildren(head, obs, ...outs, actions, upcoming || "");
+}
+
+async function loadLive() {
+  [broadcasts, schedule] = await Promise.all([api("GET", "/api/v1/admin/broadcasts"), api("GET", "/api/v1/admin/live/schedule")]);
+  renderLiveStatus();
+  $("#broadcast-list").replaceChildren(...(broadcasts.length ? broadcasts.map((b) => h("div", { class: "card" },
+    h("div", {}, h("strong", {}, b.name),
+      h("div", { class: "meta" }, b.outputs.length ? b.outputs.map((o) => `${o.label}${o.key_set ? "" : " (no key)"}`).join(" · ") : "No outputs yet"),
+      h("div", { class: "meta" }, "ID for buttons: ", h("code", {}, b.id))),
+    h("button", { class: "secondary", onclick: () => openBroadcast(b) }, "Edit")))
+    : [h("p", { class: "muted" }, "No broadcasts yet.")]));
+  $("#slot-rows").replaceChildren(...schedule.slots.map(slotRow));
+  $("#special-rows").replaceChildren(...schedule.specials.map(specialRow));
+  $("#schedule-msg").textContent = "";
+}
+
+function broadcastSelect(selected) {
+  return h("select", { name: "broadcast", "aria-label": "Broadcast" },
+    ...broadcasts.map((b) => h("option", { value: b.id, selected: b.id === selected }, b.name)));
+}
+
+function slotRow(sl = {}) {
+  const row = h("div", { class: "sched-row", "data-id": sl.id || "" },
+    h("select", { name: "weekday", "aria-label": "Day" }, ...DAYS.map((d, i) => h("option", { value: i, selected: (sl.weekday ?? 0) === i }, d))),
+    h("input", { name: "start", type: "time", value: sl.start || "", required: true, "aria-label": "Start" }),
+    h("input", { name: "end", type: "time", value: sl.end || "", required: true, "aria-label": "End" }),
+    broadcastSelect(sl.broadcast_id),
+    h("button", { type: "button", class: "secondary", title: "Remove", onclick: () => row.remove() }, "×"));
+  return row;
+}
+
+function specialRow(sp = {}) {
+  const row = h("div", { class: "sched-row special", "data-id": sp.id || "" },
+    h("input", { name: "date", type: "date", value: sp.date || "", required: true, "aria-label": "Date" }),
+    h("input", { name: "name", value: sp.name || "", placeholder: "Combined service", "aria-label": "Name" }),
+    h("input", { name: "start", type: "time", value: sp.start || "", required: true, "aria-label": "Start" }),
+    h("input", { name: "end", type: "time", value: sp.end || "", required: true, "aria-label": "End" }),
+    broadcastSelect(sp.broadcast_id),
+    h("button", { type: "button", class: "secondary", title: "Remove", onclick: () => row.remove() }, "×"));
+  return row;
+}
+
+$("#add-slot").addEventListener("click", () => {
+  if (!broadcasts.length) { alert("Add a broadcast first."); return; }
+  $("#slot-rows").append(slotRow({ weekday: 0 }));
+});
+$("#add-special").addEventListener("click", () => {
+  if (!broadcasts.length) { alert("Add a broadcast first."); return; }
+  $("#special-rows").append(specialRow());
+});
+
+$("#save-schedule").addEventListener("click", async () => {
+  const val = (r, n) => r.querySelector(`[name=${n}]`).value;
+  const body = {
+    slots: [...document.querySelectorAll("#slot-rows .sched-row")].map((r) => ({
+      id: r.dataset.id, weekday: Number(val(r, "weekday")), start: val(r, "start"), end: val(r, "end"), broadcast_id: val(r, "broadcast"),
+    })),
+    specials: [...document.querySelectorAll("#special-rows .sched-row")].map((r) => ({
+      id: r.dataset.id, date: val(r, "date"), name: val(r, "name"), start: val(r, "start"), end: val(r, "end"), broadcast_id: val(r, "broadcast"),
+    })),
+  };
+  try {
+    schedule = await api("PUT", "/api/v1/admin/live/schedule", body);
+    $("#schedule-msg").textContent = "Schedule saved.";
+    renderLiveStatus();
+  } catch (err) {
+    $("#schedule-msg").textContent = err.message;
+  }
+});
+
+function outputRow(o = {}) {
+  const row = h("div", { class: "source-row", "data-id": o.id || "" },
+    h("input", { name: "label", value: o.label || "", placeholder: "Vimeo", "aria-label": "Label" }),
+    h("input", { name: "url", value: o.url || "", required: true, placeholder: "rtmps://…", "aria-label": "Stream URL" }),
+    h("input", { name: "key", type: "password", autocomplete: "new-password", "aria-label": "Stream key",
+      placeholder: o.key_set ? "Saved" : "Stream key" }),
+    h("button", { type: "button", class: "secondary", title: "Remove", onclick: () => row.remove() }, "×"));
+  return row;
+}
+
+function openBroadcast(b) {
+  editingBroadcast = b || null;
+  $("#broadcast-title").textContent = b ? "Edit broadcast" : "Add broadcast";
+  $("#broadcast-form").name.value = b ? b.name : "";
+  $("#output-rows").replaceChildren(...(b && b.outputs.length ? b.outputs : [{}]).map(outputRow));
+  $("#delete-broadcast").hidden = !b;
+  $("#broadcast-error").textContent = "";
+  $("#broadcast-dialog").showModal();
+}
+
+$("#new-broadcast").addEventListener("click", () => openBroadcast(null));
+$("#add-output").addEventListener("click", () => $("#output-rows").append(outputRow()));
+$("#cancel-broadcast").addEventListener("click", () => $("#broadcast-dialog").close());
+
+$("#delete-broadcast").addEventListener("click", async () => {
+  if (!editingBroadcast || !confirm(`Delete ${editingBroadcast.name}? It's also removed from the schedule.`)) return;
+  try {
+    await api("DELETE", "/api/v1/admin/broadcasts/" + encodeURIComponent(editingBroadcast.id));
+    $("#broadcast-dialog").close();
+    loadLive();
+  } catch (err) {
+    $("#broadcast-error").textContent = err.message;
+  }
+});
+
+$("#broadcast-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const body = {
+    name: e.target.name.value,
+    outputs: [...document.querySelectorAll("#output-rows .source-row")].map((r) => ({
+      id: r.dataset.id,
+      label: r.querySelector("[name=label]").value.trim(),
+      url: r.querySelector("[name=url]").value.trim(),
+      key: r.querySelector("[name=key]").value.trim(),
+    })),
+  };
+  try {
+    if (editingBroadcast) await api("PUT", "/api/v1/admin/broadcasts/" + encodeURIComponent(editingBroadcast.id), body);
+    else await api("POST", "/api/v1/admin/broadcasts", body);
+    $("#broadcast-dialog").close();
+    loadLive();
+  } catch (err) {
+    $("#broadcast-error").textContent = err.message;
+  }
+});
+
+setInterval(() => { if (!$("#live").hidden && document.visibilityState === "visible") renderLiveStatus(); }, 5000);

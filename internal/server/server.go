@@ -21,6 +21,7 @@ import (
 
 	"github.com/jumpinjet22/doxaboard/core"
 	"github.com/jumpinjet22/doxaboard/internal/content"
+	"github.com/jumpinjet22/doxaboard/internal/live"
 	"github.com/jumpinjet22/doxaboard/internal/logsafe"
 )
 
@@ -44,6 +45,11 @@ type Config struct {
 	Sealer *content.Sealer
 	// RefreshEvery is how often each source is re-fetched (default 10 min).
 	RefreshEvery time.Duration
+	// Live controls the public broadcast; nil disables the live API.
+	Live *live.Controller
+	// LiveToken, if set, may start/stop the broadcast and read its status,
+	// and nothing else (for Stream Decks, Companion, shortcuts).
+	LiveToken string
 }
 
 // Server is the HTTP control plane.
@@ -99,6 +105,18 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v1/admin/sources/{id}/slides", s.admin(s.sourceSlides))
 	mux.HandleFunc("GET "+slideshowManifestPath, s.device(s.deviceSlideshow))
 	mux.HandleFunc("GET /api/v1/content/{source}/files/{name}", s.deviceOrAdmin(s.contentFile))
+
+	// Live broadcast: setup (admin) and control (admin or live token).
+	mux.HandleFunc("GET /api/v1/admin/broadcasts", s.admin(s.listBroadcasts))
+	mux.HandleFunc("POST /api/v1/admin/broadcasts", s.admin(s.saveBroadcast))
+	mux.HandleFunc("PUT /api/v1/admin/broadcasts/{id}", s.admin(s.saveBroadcast))
+	mux.HandleFunc("DELETE /api/v1/admin/broadcasts/{id}", s.admin(s.deleteBroadcast))
+	mux.HandleFunc("GET /api/v1/admin/live/schedule", s.admin(s.getLiveSchedule))
+	mux.HandleFunc("PUT /api/v1/admin/live/schedule", s.admin(s.putLiveSchedule))
+	mux.HandleFunc("GET /api/v1/live/status", s.liveAuth(s.liveStatus))
+	mux.HandleFunc("GET /api/v1/live/status.txt", s.liveAuth(s.liveStatusText))
+	mux.HandleFunc("POST /api/v1/live/start", s.liveAuth(s.liveStart))
+	mux.HandleFunc("POST /api/v1/live/stop", s.liveAuth(s.liveStop))
 
 	// Admin console (static, talks to the admin API).
 	sub, _ := fs.Sub(webFS, "web")

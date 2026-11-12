@@ -1,7 +1,9 @@
 # OBS setup
 
 OBS encodes once and sends to the DoxaBoard relay. The relay fans out to
-screens (multicast + unicast) and Vimeo. You don't need NDI.
+screens (multicast + unicast) and, when you press **Go live**, to Vimeo,
+YouTube, Facebook or any other platform (see [live.md](live.md)). OBS itself
+never talks to those platforms. You don't need NDI.
 
 ## Stream
 
@@ -38,4 +40,5 @@ Settings → Audio: **48 kHz**, AAC **160 Kbps**.
 
 - Console → Screens: screens should switch to *Live* within ~10 seconds of going live.
 - On any machine: `ffplay "srt://<server-ip>:8890?streamid=read:live"`
-- If Vimeo is configured, its event page should show the stream as live.
+- Console → Live: "OBS is sending to the relay." Press **Go live** and each
+  output should show *forwarding*.

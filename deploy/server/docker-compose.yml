@@ -2,7 +2,7 @@
 #
 #   OBS --SRT--> relay (mediamtx) --+--> multicast to every screen on the LAN
 #                                   +--> SRT/RTSP/HLS for screens that pull
-#                                   +--> Vimeo (RTMPS), if configured
+#                                   +--> Vimeo / YouTube / Facebook (Go Live)
 #
 #   rclone (OneDrive) --> ./photos --> doxaboard-server --> screens (cached)
 #
@@ -11,8 +11,9 @@
 #   docker compose run --rm rclone config   # one time: connect OneDrive
 #   docker compose up -d
 #
-# The relay uses host networking: multicast does not survive Docker's
-# bridge network, and SRT is UDP, which is fiddly to publish otherwise.
+# Both services use host networking. The relay needs it for multicast and
+# SRT (UDP); the server needs it to reach the relay's control API, which
+# only listens on 127.0.0.1. The console is on http://<server>:8080.
 
 services:
   server:
@@ -20,8 +21,7 @@ services:
       context: ../..
       dockerfile: deploy/server/Dockerfile
     restart: unless-stopped
-    ports:
-      - "8080:8080"
+    network_mode: host
     environment:
       DOXABOARD_ADMIN_TOKEN: ${DOXABOARD_ADMIN_TOKEN:?set in .env}
       DOXABOARD_ENROLLMENT_TOKEN: ${DOXABOARD_ENROLLMENT_TOKEN:?set in .env}
@@ -30,13 +30,16 @@ services:
       # Encrypts connector API keys. Kept apart from ./data so a database
       # backup alone doesn't include the key. Back it up separately.
       DOXABOARD_SECRET_KEY_FILE: /secrets/secret.key
+      DOXABOARD_TIMEZONE: ${DOXABOARD_TIMEZONE:-}
+      DOXABOARD_LIVE_TOKEN: ${DOXABOARD_LIVE_TOKEN:-}
+      DOXABOARD_RELAY_API: http://127.0.0.1:9997
     volumes:
       - ./data:/data
       - ./secrets:/secrets
       - ./photos:/photos:ro
 
   relay:
-    # The -ffmpeg variant includes ffmpeg for the multicast and Vimeo outputs.
+    # The -ffmpeg variant includes ffmpeg for the multicast fanout.
     # Pinned by tag AND digest: the tag is for humans, the digest is what
     # actually gets pulled. Dependabot updates both.
     image: bluenviron/mediamtx:1.21.3-ffmpeg@sha256:208e9f1740a09a5ee63b6308e77ce0d54fce0456462f640e6bd9acfc62ebb5a2
@@ -46,7 +49,6 @@ services:
       MULTICAST_ADDR: ${MULTICAST_ADDR:-239.10.10.1:5000}
       MULTICAST_TTL: ${MULTICAST_TTL:-2}
       MULTICAST_IFACE_ADDR: ${MULTICAST_IFACE_ADDR:-}
-      VIMEO_RTMP_URL: ${VIMEO_RTMP_URL:-}
     volumes:
       - ./relay/mediamtx.yml:/mediamtx.yml:ro
       - ./relay/on-ready.sh:/on-ready.sh:ro

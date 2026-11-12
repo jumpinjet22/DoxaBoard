@@ -1,6 +1,7 @@
 #!/bin/sh
 # Started by mediamtx (runOnAvailable) when the "live" path gets a publisher (OBS).
-# Runs each output in its own restart loop; mediamtx kills us when OBS stops.
+# Runs the multicast fanout in a restart loop; mediamtx kills us when OBS stops.
+# Public outputs (Vimeo, YouTube...) are forwarded by mediamtx, controlled by DoxaBoard.
 set -u
 
 SRC="rtsp://127.0.0.1:8554/${MTX_PATH:-live}"
@@ -22,15 +23,5 @@ if [ -n "${MULTICAST_ADDR:-}" ]; then
   ) &
 fi
 
-if [ -n "${VIMEO_RTMP_URL:-}" ]; then
-  (
-    while true; do
-      echo "vimeo: pushing ${SRC}"
-      ffmpeg -hide_banner -loglevel warning -rtsp_transport tcp -i "$SRC" \
-        -map 0 -c copy -f flv "$VIMEO_RTMP_URL"
-      sleep 5
-    done
-  ) &
-fi
 
 wait

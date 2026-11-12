@@ -12,7 +12,9 @@ DoxaBoard takes a single stream from OBS and puts it on every TV in a church
 (or school, or office) over the network you already have. When nothing is
 live, screens show slides and photos from the places your content already
 lives: a OneDrive folder today, RSS feeds, Rock RMS and other systems through
-connectors. It also pushes the same stream to Vimeo, so you only encode once.
+connectors. It also forwards the same stream to Vimeo, YouTube or Facebook
+when you press **Go live** (from the console, a Stream Deck or Companion),
+so you only encode once.
 
 > *Doxa* (δόξα) is Greek for "glory," as in *Gloria Dei* and *doxology*.
 > "Let your light shine before others, that they may see your good deeds and
@@ -24,7 +26,7 @@ connectors. It also pushes the same stream to Vimeo, so you only encode once.
                          ┌───────────────────── server (Docker) ─────────────────────┐
 OBS ──SRT──▶ relay (mediamtx) ──┬── multicast ──▶ every screen on the LAN           │
                                 ├── SRT / RTSP / LL-HLS ──▶ screens that pull        │
-                                └── RTMPS ──▶ Vimeo                                  │
+                                └── Go live ──▶ Vimeo / YouTube / Facebook            │
    OneDrive, RSS, Rock, ... ──▶ connectors ──▶ doxaboard-server ◀── admin console     │
                          └────────────────────────────────────────────────────────────┘
                                                    ▲
@@ -52,7 +54,8 @@ goes down, every screen keeps doing what it was last told, even across reboots.
 |---|---|
 | Failover core, control plane, admin console | ✅ Built, tested |
 | Pi agent (mpv, probes, slideshow, watchdog) | ✅ Built, tested |
-| Relay stack (mediamtx, multicast, Vimeo push, rclone) | ✅ Built; config checked against mediamtx 1.21 |
+| Relay stack (mediamtx, multicast, rclone) | ✅ Built; config checked against mediamtx 1.21 |
+| Live broadcast: Go live / End, multiple platforms, schedule with special dates, Companion/Stream Deck API | ✅ Console **Live** tab; see [docs/live.md](docs/live.md) |
 | OneDrive photo slideshow | ✅ Works through the server's photo albums |
 | Content sources: RSS/Atom, JSON feed, folder | ✅ Add them in the console's **Content** tab; text-only posts become rendered slides |
 | Rock RMS, WordPress, Planning Center connectors | ⬜ Planned |
@@ -138,7 +141,7 @@ Go 1.26.11+ (the `go` command fetches it automatically). No cgo, so everything c
 | `internal/server/` | Control plane: API, SQLite store, embedded admin console |
 | `internal/agent/` | Linux screen agent: mpv, probes, slideshow, metrics |
 | `cmd/` | `doxaboard-server`, `doxaboard-agent`, `doxaboard-connector` |
-| `deploy/server/` | Docker Compose: server, mediamtx relay, multicast, Vimeo, rclone |
+| `deploy/server/` | Docker Compose: server, mediamtx relay, multicast, rclone |
 | `deploy/agent/` | systemd unit, install script, example config |
 | `examples/` | A sidecar connector in standard-library Python |
 | `docs/` | Architecture, connectors, network, hardware, OBS |
@@ -150,6 +153,7 @@ Go 1.26.11+ (the `go` command fetches it automatically). No cgo, so everything c
 - [Network: multicast, IGMP, long cable runs](docs/network.md)
 - [Hardware: Pi models, power, composite, Android TV](docs/hardware.md)
 - [OBS setup](docs/obs.md)
+- [Live broadcast: Go live, schedules, Companion](docs/live.md)
 - [Roadmap](ROADMAP.md)
 
 ## Security

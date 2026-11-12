@@ -77,8 +77,10 @@ covered by unit tests.
 ## Relay
 
 mediamtx receives OBS once and serves it to everything. `on-ready.sh` starts
-two `ffmpeg -c copy` processes when OBS goes live: one sends multicast, one
-pushes to Vimeo. Nothing is transcoded, so CPU use is negligible.
+an `ffmpeg -c copy` multicast fanout when OBS goes live. Public outputs
+(Vimeo, YouTube, Facebook...) are forwarded by mediamtx itself, switched on
+and off by DoxaBoard through mediamtx's localhost-only control API; see
+[live.md](live.md). Nothing is transcoded, so CPU use is negligible.
 
 ## Android TV (planned)
 
