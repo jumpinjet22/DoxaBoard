@@ -88,18 +88,28 @@ Brand everything from one place, with no code changes.
 - ⬜ Test hardware: Google TV Streamer, onn 4K Pro (built-in Ethernet)
 - ⬜ Web player page as a zero-install option for one-off screens
 
-## Milestone 4.5: Rock RMS integration ⬜
+## Milestone 4.5: Content sources (Rock RMS and other CMSes) ⬜
 
-Optional connector for churches running [Rock RMS](https://www.rockrms.com/).
+Slides can come from anywhere, through one provider interface on the server.
+Screens never talk to a CMS directly: the server pulls, caches images, and
+hands screens a manifest, so a CMS outage never blanks a TV.
 
-- ⬜ Content provider abstraction: a slideshow can come from a OneDrive folder
-  **or** a Rock content channel
-- ⬜ Rock content channel → announcement slides (image, title, summary,
-  start/expire dates respected)
-- ⬜ Rock calendar → "upcoming events" slide
-- ⬜ Rock service schedules → DoxaCast schedules (go live for service times)
-- ⬜ Rock REST API key auth (`Authorization-Token`), read-only, server-side only
-- ⬜ Later: sign in to the admin console with Rock accounts
+**The interface:** each provider returns slides (title, body, image,
+start/expire, order, duration). A profile's slideshow can merge several sources.
+
+**Universal sources (cover most CMSes with no custom code):**
+- ⬜ Folder: anything rclone supports (OneDrive, Google Drive, Dropbox, SharePoint, S3, SMB...)
+- ⬜ RSS / Atom feed with images (WordPress, Squarespace, Rock channel feeds, most CMSes)
+- ⬜ Generic JSON feed: a small documented schema anyone can point a script,
+  Zapier/Make flow or CMS template at
+
+**First-class connectors:**
+- ⬜ Rock RMS: content channels (start/expire, order, image attribute),
+  calendar → upcoming events, service schedules → DoxaCast schedules;
+  read-only REST key, server-side only
+- ⬜ WordPress REST API (posts or a category, with featured images)
+- ⬜ Planning Center (Calendar events)
+- ⬜ Community-contributed connectors (compiled in, following a documented provider guide)
 
 ## Milestone 5: Hardening for other churches ⬜
 
