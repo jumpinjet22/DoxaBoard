@@ -1,0 +1,35 @@
+version: 2
+updates:
+  # Go modules (server, agent, core)
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      go-minor-and-patch:
+        update-types: [minor, patch]
+    labels: [dependencies, go]
+
+  # GitHub Actions used by our workflows
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+    labels: [dependencies, ci]
+
+  # Server image base layers (golang, distroless)
+  - package-ecosystem: docker
+    directory: /deploy/server
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]
+
+  # Images in docker-compose.yml (mediamtx, rclone)
+  - package-ecosystem: docker-compose
+    directory: /deploy/server
+    schedule:
+      interval: weekly
+    labels: [dependencies, docker]

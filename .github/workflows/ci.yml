@@ -21,6 +21,8 @@ jobs:
         run: make test
       - name: build (arm64, armv7, amd64)
         run: make build
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
       - name: shell syntax
         run: |
           sh -n deploy/agent/install.sh
