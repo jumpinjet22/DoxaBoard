@@ -97,4 +97,16 @@ fieldset { border: 1px solid var(--border); border-radius: 8px; margin: 12px 0; 
 .thumbs figcaption { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .thumbs .inactive img { opacity: .4; }
 .field-help { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.live-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.live-badge { font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--border); }
+.live-badge.on { background: var(--bad); color: #fff; }
+.live-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.live-actions .go { background: var(--bad); border-color: var(--bad); color: #fff; }
+.out-line { font-size: 13px; margin-top: 4px; }
+.sched-row { display: grid; grid-template-columns: 140px 135px 135px 1fr 36px; gap: 6px; margin-bottom: 6px; }
+.sched-row.special { grid-template-columns: 160px 1fr 135px 135px 1fr 36px; }
+h4 { margin: 14px 0 6px; font-size: 14px; }
+@media (max-width: 700px) {
+  .sched-row, .sched-row.special { grid-template-columns: 1fr 1fr; }
+}
 .check-list label { display: flex; align-items: center; gap: 8px; margin: 4px 0; }

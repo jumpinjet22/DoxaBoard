@@ -47,7 +47,7 @@ The goal is one OBS stream on a few Pis with automatic failover, and photos when
 **Server stack (`deploy/server`):**
 - ✅ mediamtx relay: OBS → SRT/RTMP in; SRT/RTSP/LL-HLS out
 - ✅ Multicast fanout (copy, no transcode)
-- ✅ Vimeo RTMPS push (copy, no transcode)
+- ✅ Public outputs forwarded by the relay (copy, no transcode)
 - ✅ rclone OneDrive mirror
 
 **Still to do in M1:**
@@ -56,7 +56,14 @@ The goal is one OBS stream on a few Pis with automatic failover, and photos when
 - ⬜ Release workflow: tagged builds publish arm64/armv7/amd64 binaries
 - ⬜ "Copy setup command" button in the console (one-line Pi install)
 
-## Milestone 2: Day-to-day operations ⬜
+## Milestone 2: Day-to-day operations 🚧
+
+- ✅ Live broadcast control: Go live / End from the console or any HTTP button
+  (Companion, Stream Deck), broadcasts with multiple outputs (Vimeo, YouTube,
+  Facebook, any RTMP/SRT), weekly schedule with special dates, a limited live
+  token, self-healing after relay restarts
+- ⬜ Live tab: OBS signal details, stream preview, kick a rogue publisher
+- ⬜ Relay publish credentials (see Milestone 5)
 
 - ⬜ Groups/zones (lobby, hallways, classrooms) with bulk assignment
 - ⬜ Schedules ("live stream Sundays 9–12, photos otherwise")

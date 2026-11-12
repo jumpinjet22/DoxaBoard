@@ -10,6 +10,7 @@
 <header>
   <h1>DoxaBoard</h1>
   <nav>
+    <button data-tab="live" class="tab">Live</button>
     <button data-tab="devices" class="tab active">Screens</button>
     <button data-tab="profiles" class="tab">Profiles</button>
     <button data-tab="content" class="tab">Content</button>
@@ -73,6 +74,49 @@
           <span class="spacer"></span>
           <button type="button" id="cancel-profile" class="secondary">Cancel</button>
           <button type="submit" id="save-profile">Save</button>
+        </div>
+      </form>
+    </dialog>
+  </section>
+
+  <section id="live" hidden>
+    <div class="bar"><h2>Live broadcast</h2><span id="live-tz" class="muted"></span></div>
+    <div id="live-status" class="card stack"></div>
+    <p id="live-error" class="error"></p>
+
+    <div class="bar"><h3>Broadcasts</h3><button id="new-broadcast" class="secondary">Add broadcast</button></div>
+    <p class="muted">A broadcast is where a service goes: one or more outputs (Vimeo, YouTube, Facebook, any RTMP/SRT ingest). Stream keys are stored encrypted.</p>
+    <div id="broadcast-list"></div>
+
+    <div class="bar"><h3>Schedule</h3><button id="save-schedule">Save schedule</button></div>
+    <p class="muted">Optional. The <strong>Go live</strong> button picks the broadcast scheduled right now. On a date with special events, they replace the weekly schedule.</p>
+    <h4>Every week</h4>
+    <div id="slot-rows"></div>
+    <button type="button" id="add-slot" class="secondary">Add weekly time</button>
+    <h4>Special dates</h4>
+    <div id="special-rows"></div>
+    <button type="button" id="add-special" class="secondary">Add special date</button>
+    <p id="schedule-msg" class="muted"></p>
+
+    <dialog id="broadcast-dialog">
+      <form id="broadcast-form" method="dialog">
+        <h3 id="broadcast-title">Broadcast</h3>
+        <label>Name <input name="name" required placeholder="11:00 service"></label>
+        <fieldset>
+          <legend>Outputs</legend>
+          <div id="output-rows"></div>
+          <button type="button" id="add-output" class="secondary">Add output</button>
+          <p class="field-help">Copy the <em>Stream URL</em> and <em>Stream key</em> from your platform's live settings.
+            Common URLs: YouTube <code>rtmp://a.rtmp.youtube.com/live2</code>,
+            Facebook <code>rtmps://live-api-s.facebook.com:443/rtmp/</code>,
+            Vimeo: shown in the event's stream settings.</p>
+        </fieldset>
+        <p id="broadcast-error" class="error"></p>
+        <div class="actions">
+          <button type="button" id="delete-broadcast" class="danger">Delete</button>
+          <span class="spacer"></span>
+          <button type="button" id="cancel-broadcast" class="secondary">Cancel</button>
+          <button type="submit">Save</button>
         </div>
       </form>
     </dialog>

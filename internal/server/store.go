@@ -77,7 +77,7 @@ func OpenStore(path string) (*Store, error) {
 		return nil, err
 	}
 	db.SetMaxOpenConns(1) // SQLite: one writer; keeps things simple and safe
-	if _, err := db.ExecContext(context.Background(), schema+sourcesSchema); err != nil {
+	if _, err := db.ExecContext(context.Background(), schema+sourcesSchema+liveSchema); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("migrate: %w", err)
 	}

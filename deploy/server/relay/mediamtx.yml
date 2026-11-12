@@ -31,13 +31,20 @@ hlsSegmentCount: 7
 
 webrtc: false
 
+# Control API: DoxaBoard uses it to start and stop the public broadcast
+# (forwarding to Vimeo, YouTube, Facebook...). Bound to localhost only:
+# it can reconfigure the relay, so it must never be reachable from the LAN.
+api: true
+apiAddress: 127.0.0.1:9997
+
 paths:
   live:
     # Don't let another client kick OBS off and publish in its place.
     # (Anyone on the network can still publish while OBS is offline:
     # see the publish-credentials item in ROADMAP.md.)
     overridePublisher: false
-    # When OBS starts publishing, start multicast fanout and the Vimeo push.
-    # Both are copies (no transcoding), so CPU use is negligible.
+    # When OBS starts publishing, start the multicast fanout to screens.
+    # Public outputs (Vimeo, YouTube...) are forwarded by mediamtx itself,
+    # switched on and off by DoxaBoard's Go Live / End.
     runOnAvailable: /on-ready.sh
     runOnAvailableRestart: true
