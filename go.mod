@@ -1,6 +1,6 @@
 module github.com/jumpinjet22/doxacast
 
-go 1.26.0
+go 1.26.11
 
 require modernc.org/sqlite v1.62.0
 
