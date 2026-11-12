@@ -1,4 +1,4 @@
-# mediamtx relay for DoxaCast. OBS publishes once; everyone else reads.
+# mediamtx relay for DoxaBoard. OBS publishes once; everyone else reads.
 # Written for mediamtx 1.21. Check the release notes before bumping.
 #
 # OBS publish (Settings > Stream > Custom):

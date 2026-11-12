@@ -1,16 +1,16 @@
 # Community sidecar connectors.
 #
-# These run outside DoxaCast, maintained by their authors. DoxaCast reads
+# These run outside DoxaBoard, maintained by their authors. DoxaBoard reads
 # them with the built-in "jsonfeed" connector. Listing means the sample feed
-# passed `doxacast-connector check-feed`; it isn't a security review.
+# passed `doxaboard-connector check-feed`; it isn't a security review.
 #
 # To be listed, open a "List my connector" issue.
 #
 # Entry format:
 #   - name: Example CMS
-#     repo: https://github.com/someone/doxacast-example-cms
+#     repo: https://github.com/someone/doxaboard-example-cms
 #     maintainer: "@someone"
 #     description: One sentence.
-#     sample_feed: https://someone.github.io/doxacast-example-cms/sample.json
+#     sample_feed: https://someone.github.io/doxaboard-example-cms/sample.json
 #     language: Python
 connectors: []

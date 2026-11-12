@@ -1,10 +1,10 @@
-# DoxaCast server stack.
+# DoxaBoard server stack.
 #
 #   OBS --SRT--> relay (mediamtx) --+--> multicast to every screen on the LAN
 #                                   +--> SRT/RTSP/HLS for screens that pull
 #                                   +--> Vimeo (RTMPS), if configured
 #
-#   rclone (OneDrive) --> ./photos --> doxacast-server --> screens (cached)
+#   rclone (OneDrive) --> ./photos --> doxaboard-server --> screens (cached)
 #
 # Usage:
 #   cp .env.example .env   # then edit it
@@ -23,13 +23,13 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DOXACAST_ADMIN_TOKEN: ${DOXACAST_ADMIN_TOKEN:?set in .env}
-      DOXACAST_ENROLLMENT_TOKEN: ${DOXACAST_ENROLLMENT_TOKEN:?set in .env}
-      DOXACAST_DB: /data/doxacast.db
-      DOXACAST_PHOTO_DIR: /photos
+      DOXABOARD_ADMIN_TOKEN: ${DOXABOARD_ADMIN_TOKEN:?set in .env}
+      DOXABOARD_ENROLLMENT_TOKEN: ${DOXABOARD_ENROLLMENT_TOKEN:?set in .env}
+      DOXABOARD_DB: /data/doxaboard.db
+      DOXABOARD_PHOTO_DIR: /photos
       # Encrypts connector API keys. Kept apart from ./data so a database
       # backup alone doesn't include the key. Back it up separately.
-      DOXACAST_SECRET_KEY_FILE: /secrets/secret.key
+      DOXABOARD_SECRET_KEY_FILE: /secrets/secret.key
     volumes:
       - ./data:/data
       - ./secrets:/secrets
@@ -59,7 +59,7 @@ services:
     command:
       - |
         while true; do
-          rclone sync "onedrive:${ONEDRIVE_PATH:-DoxaCast}" /photos \
+          rclone sync "onedrive:${ONEDRIVE_PATH:-DoxaBoard}" /photos \
             --ignore-case --include "*.{jpg,jpeg,png,webp,gif}" \
             --max-size 50M --transfers 4 --log-level NOTICE \
             || echo "sync failed; will retry"

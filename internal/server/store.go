@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jumpinjet22/doxacast/core"
+	"github.com/jumpinjet22/doxaboard/core"
 	_ "modernc.org/sqlite" // pure-Go SQLite, no cgo, cross-compiles cleanly
 )
 

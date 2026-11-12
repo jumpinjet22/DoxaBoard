@@ -1,4 +1,4 @@
-module github.com/jumpinjet22/doxacast
+module github.com/jumpinjet22/doxaboard
 
 go 1.26.11
 

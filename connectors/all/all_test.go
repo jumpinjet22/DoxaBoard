@@ -3,7 +3,7 @@ package all
 import (
 	"testing"
 
-	"github.com/jumpinjet22/doxacast/connectors/registry"
+	"github.com/jumpinjet22/doxaboard/connectors/registry"
 )
 
 func TestAllRegistered(t *testing.T) {

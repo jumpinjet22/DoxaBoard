@@ -1,6 +1,6 @@
 # OBS setup
 
-OBS encodes once and sends to the DoxaCast relay. The relay fans out to
+OBS encodes once and sends to the DoxaBoard relay. The relay fans out to
 screens (multicast + unicast) and Vimeo. You don't need NDI.
 
 ## Stream

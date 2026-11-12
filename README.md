@@ -1,14 +1,14 @@
-# DoxaCast
+# DoxaBoard
 
-[![CI](https://github.com/jumpinjet22/DoxaCast/actions/workflows/ci.yml/badge.svg)](https://github.com/jumpinjet22/DoxaCast/actions/workflows/ci.yml)
-[![Lint](https://github.com/jumpinjet22/DoxaCast/actions/workflows/lint.yml/badge.svg)](https://github.com/jumpinjet22/DoxaCast/actions/workflows/lint.yml)
-[![CodeQL](https://github.com/jumpinjet22/DoxaCast/actions/workflows/codeql.yml/badge.svg)](https://github.com/jumpinjet22/DoxaCast/actions/workflows/codeql.yml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/jumpinjet22/DoxaCast/badge)](https://scorecard.dev/viewer/?uri=github.com/jumpinjet22/DoxaCast)
+[![CI](https://github.com/jumpinjet22/DoxaBoard/actions/workflows/ci.yml/badge.svg)](https://github.com/jumpinjet22/DoxaBoard/actions/workflows/ci.yml)
+[![Lint](https://github.com/jumpinjet22/DoxaBoard/actions/workflows/lint.yml/badge.svg)](https://github.com/jumpinjet22/DoxaBoard/actions/workflows/lint.yml)
+[![CodeQL](https://github.com/jumpinjet22/DoxaBoard/actions/workflows/codeql.yml/badge.svg)](https://github.com/jumpinjet22/DoxaBoard/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/jumpinjet22/DoxaBoard/badge)](https://scorecard.dev/viewer/?uri=github.com/jumpinjet22/DoxaBoard)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 **One live stream, every screen in the building, and screens that keep going no matter what.**
 
-DoxaCast takes a single stream from OBS and puts it on every TV in a church
+DoxaBoard takes a single stream from OBS and puts it on every TV in a church
 (or school, or office) over the network you already have. When nothing is
 live, screens show slides and photos from the places your content already
 lives: a OneDrive folder today, RSS feeds, Rock RMS and other systems through
@@ -25,12 +25,12 @@ connectors. It also pushes the same stream to Vimeo, so you only encode once.
 OBS ──SRT──▶ relay (mediamtx) ──┬── multicast ──▶ every screen on the LAN           │
                                 ├── SRT / RTSP / LL-HLS ──▶ screens that pull        │
                                 └── RTMPS ──▶ Vimeo                                  │
-   OneDrive, RSS, Rock, ... ──▶ connectors ──▶ doxacast-server ◀── admin console     │
+   OneDrive, RSS, Rock, ... ──▶ connectors ──▶ doxaboard-server ◀── admin console     │
                          └────────────────────────────────────────────────────────────┘
                                                    ▲
                           desired state / heartbeats
                                                    │
-                     doxacast-agent on each screen (Raspberry Pi)
+                     doxaboard-agent on each screen (Raspberry Pi)
 ```
 
 Every screen runs a small agent that tries sources in priority order and fails over by itself:
@@ -69,15 +69,15 @@ See [ROADMAP.md](ROADMAP.md).
 You need a Linux box on the same network as the screens, with Docker.
 
 ```sh
-git clone https://github.com/jumpinjet22/DoxaCast
-cd DoxaCast/deploy/server
+git clone https://github.com/jumpinjet22/DoxaBoard
+cd DoxaBoard/deploy/server
 cp .env.example .env            # set the two tokens: openssl rand -hex 24
 mkdir -p data secrets photos && sudo chown 65532:65532 data secrets
 docker compose run --rm rclone config   # create a remote named "onedrive"
 docker compose up -d
 ```
 
-Open `http://<server>:8080` and sign in with `DOXACAST_ADMIN_TOKEN`.
+Open `http://<server>:8080` and sign in with `DOXABOARD_ADMIN_TOKEN`.
 
 ### 2. OBS
 
@@ -93,7 +93,7 @@ See [docs/obs.md](docs/obs.md).
 Raspberry Pi OS Lite, wired Ethernet. Build the agent (`make build`), then on the Pi:
 
 ```sh
-sudo deploy/agent/install.sh ./doxacast-agent-linux-arm64 http://<server>:8080 <DOXACAST_ENROLLMENT_TOKEN>
+sudo deploy/agent/install.sh ./doxaboard-agent-linux-arm64 http://<server>:8080 <DOXABOARD_ENROLLMENT_TOKEN>
 ```
 
 The Pi appears in the admin console. Create a profile, assign it, and you're done.
@@ -103,16 +103,16 @@ The Pi appears in the admin console. Create a profile, assign it, and you're don
 Slides can come from almost anywhere, and most systems need no code at all:
 
 - **RSS / Atom:** WordPress, Squarespace, most church website builders
-- **JSON feed:** the [`doxacast.slides/v1`](docs/connectors.md#the-slide-feed) format. Anything that can output JSON can feed DoxaCast.
+- **JSON feed:** the [`doxaboard.slides/v1`](docs/connectors.md#the-slide-feed) format. Anything that can output JSON can feed DoxaBoard.
 - **Folder:** any album the server can see, e.g. OneDrive, Google Drive or Dropbox via rclone
 
 Want to connect something else? Write a **sidecar** in any language (start
 from [`examples/sidecar-python`](examples/sidecar-python)), or an **in-tree** Go
-connector. The `doxacast-connector` tool runs the same checks CI does:
+connector. The `doxaboard-connector` tool runs the same checks CI does:
 
 ```sh
-go run ./cmd/doxacast-connector check-feed http://localhost:8090/feed   # any-language sidecars
-go run ./cmd/doxacast-connector new my-cms                             # scaffold a Go connector
+go run ./cmd/doxaboard-connector check-feed http://localhost:8090/feed   # any-language sidecars
+go run ./cmd/doxaboard-connector new my-cms                             # scaffold a Go connector
 make connector-check NAME=mycms                                         # what CI runs
 ```
 
@@ -133,11 +133,11 @@ Go 1.26.11+ (the `go` command fetches it automatically). No cgo, so everything c
 | Path | What |
 |---|---|
 | `core/` | Platform-independent brain: desired state, failover, engine (gomobile-ready for Android TV) |
-| `slides/` | The `doxacast.slides/v1` feed format, validation and JSON Schema |
+| `slides/` | The `doxaboard.slides/v1` feed format, validation and JSON Schema |
 | `connectors/` | Content connectors, the registry they plug into, and the conformance kit |
 | `internal/server/` | Control plane: API, SQLite store, embedded admin console |
 | `internal/agent/` | Linux screen agent: mpv, probes, slideshow, metrics |
-| `cmd/` | `doxacast-server`, `doxacast-agent`, `doxacast-connector` |
+| `cmd/` | `doxaboard-server`, `doxaboard-agent`, `doxaboard-connector` |
 | `deploy/server/` | Docker Compose: server, mediamtx relay, multicast, Vimeo, rclone |
 | `deploy/agent/` | systemd unit, install script, example config |
 | `examples/` | A sidecar connector in standard-library Python |

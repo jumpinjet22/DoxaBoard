@@ -10,7 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/jumpinjet22/doxacast/slides"
+	"github.com/jumpinjet22/doxaboard/slides"
 )
 
 // Feeds come from the internet: any byte sequence must either be rejected

@@ -13,10 +13,10 @@ import (
 	"strings"
 	"testing"
 
-	_ "github.com/jumpinjet22/doxacast/connectors/all"
-	"github.com/jumpinjet22/doxacast/connectors/registry"
-	"github.com/jumpinjet22/doxacast/core"
-	"github.com/jumpinjet22/doxacast/internal/content"
+	_ "github.com/jumpinjet22/doxaboard/connectors/all"
+	"github.com/jumpinjet22/doxaboard/connectors/registry"
+	"github.com/jumpinjet22/doxaboard/core"
+	"github.com/jumpinjet22/doxaboard/internal/content"
 )
 
 func newContentServer(t *testing.T) (*httptest.Server, *Store) {
@@ -57,7 +57,7 @@ func TestContentSourcesEndToEnd(t *testing.T) {
 		switch r.URL.Path {
 		case "/feed":
 			gotAuth = r.Header.Get("Authorization")
-			w.Write([]byte(`{"schema":"doxacast.slides/v1","slides":[
+			w.Write([]byte(`{"schema":"doxaboard.slides/v1","slides":[
 				{"id":"welcome","title":"Welcome","image":{"url":"/hero.png","alt":"hero"},"order":1},
 				{"id":"groups","title":"Small Groups","body":"Find one that fits.","order":2},
 				{"id":"old","title":"Past event","expires_at":"2020-01-01T00:00:00Z"}]}`))

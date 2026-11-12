@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jumpinjet22/doxacast/core"
+	"github.com/jumpinjet22/doxaboard/core"
 )
 
 func TestMulticastAddr(t *testing.T) {

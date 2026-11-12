@@ -19,9 +19,9 @@ import (
 	"testing/fstest"
 	"time"
 
-	_ "github.com/jumpinjet22/doxacast/connectors/all"
-	"github.com/jumpinjet22/doxacast/connectors/registry"
-	"github.com/jumpinjet22/doxacast/slides"
+	_ "github.com/jumpinjet22/doxaboard/connectors/all"
+	"github.com/jumpinjet22/doxaboard/connectors/registry"
+	"github.com/jumpinjet22/doxaboard/slides"
 	"golang.org/x/image/font"
 )
 
@@ -152,7 +152,7 @@ func TestRefreshJSONFeed(t *testing.T) {
 		}
 		switch r.URL.Path {
 		case "/feed":
-			w.Write([]byte(`{"schema":"doxacast.slides/v1","slides":[
+			w.Write([]byte(`{"schema":"doxaboard.slides/v1","slides":[
 			  {"id":"img","title":"Fall Festival","image":{"url":"/img.png","alt":"x"},"order":20},
 			  {"id":"text","title":"Small Groups","body":"Find one that fits.","order":10},
 			  {"id":"broken","title":"Broken image","image":{"url":"/missing.png","alt":"x"},"order":30},

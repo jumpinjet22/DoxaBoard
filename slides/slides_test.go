@@ -16,7 +16,7 @@ func tp(s string) *time.Time {
 
 func TestParseAndValidateGoodFeed(t *testing.T) {
 	raw := `{
-	  "schema": "doxacast.slides/v1",
+	  "schema": "doxaboard.slides/v1",
 	  "future_field": {"ignored": true},
 	  "slides": [
 	    {"id": "a", "title": "Fall Festival", "body": "Oct 26", "order": 20,
@@ -93,7 +93,7 @@ func TestValidateProblems(t *testing.T) {
 func TestFeedLevelErrors(t *testing.T) {
 	for _, f := range []Feed{
 		{Slides: []Slide{{ID: "a", Title: "x"}}},
-		{Schema: "doxacast.slides/v9", Slides: []Slide{{ID: "a", Title: "x"}}},
+		{Schema: "doxaboard.slides/v9", Slides: []Slide{{ID: "a", Title: "x"}}},
 		{Schema: SchemaV1, Slides: make([]Slide, MaxSlides+1)},
 	} {
 		if !Validate(f).HasErrors() {
@@ -106,7 +106,7 @@ func TestFeedLevelErrors(t *testing.T) {
 }
 
 func TestParseLimits(t *testing.T) {
-	big := `{"schema":"doxacast.slides/v1","slides":[{"id":"a","title":"` + strings.Repeat("x", MaxFeedBytes) + `"}]}`
+	big := `{"schema":"doxaboard.slides/v1","slides":[{"id":"a","title":"` + strings.Repeat("x", MaxFeedBytes) + `"}]}`
 	if _, err := Parse(strings.NewReader(big)); err == nil || !strings.Contains(err.Error(), "larger") {
 		t.Fatalf("want size error, got %v", err)
 	}

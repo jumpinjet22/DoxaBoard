@@ -15,7 +15,7 @@ import (
 // ErrNotModified is returned by FetchState when the server state is unchanged.
 var ErrNotModified = errors.New("state not modified")
 
-// Client talks to the DoxaCast server's device API.
+// Client talks to the DoxaBoard server's device API.
 type Client struct {
 	BaseURL string
 	Token   string

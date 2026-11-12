@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jumpinjet22/doxacast/core"
+	"github.com/jumpinjet22/doxaboard/core"
 )
 
 // Slideshow syncs photos from the server into a local cache and shows them

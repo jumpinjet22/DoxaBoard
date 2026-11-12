@@ -28,7 +28,7 @@ func newCmd(args []string, stdout, stderr io.Writer) int {
 	fs.SetOutput(stderr)
 	dir := fs.String("dir", "connectors", "parent directory for the connector")
 	fs.Usage = func() {
-		fmt.Fprintln(stderr, "usage: doxacast-connector new [-dir connectors] <name>")
+		fmt.Fprintln(stderr, "usage: doxaboard-connector new [-dir connectors] <name>")
 		fmt.Fprintln(stderr, "  name: lowercase letters, digits and dashes, e.g. planning-center")
 		fs.PrintDefaults()
 	}

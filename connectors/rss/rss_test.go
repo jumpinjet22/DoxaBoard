@@ -11,9 +11,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/jumpinjet22/doxacast/connectors/connectortest"
-	"github.com/jumpinjet22/doxacast/connectors/registry"
-	"github.com/jumpinjet22/doxacast/slides"
+	"github.com/jumpinjet22/doxaboard/connectors/connectortest"
+	"github.com/jumpinjet22/doxaboard/connectors/registry"
+	"github.com/jumpinjet22/doxaboard/slides"
 )
 
 //go:embed testdata

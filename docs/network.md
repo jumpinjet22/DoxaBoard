@@ -16,7 +16,7 @@ A 1080p30 stream at ~6 Mbps is the budget for everything below.
 Multicast is the primary source, and it needs the network to cooperate:
 
 1. **Wired screens.** Wi-Fi sends multicast at the lowest rate with no
-   retransmits, which means blocky video. DoxaCast falls back to unicast when
+   retransmits, which means blocky video. DoxaBoard falls back to unicast when
    multicast doesn't arrive, but don't plan on multicast over Wi-Fi.
 2. **Managed switches with IGMP snooping enabled.** Without it, many switches
    flood multicast to *every* port.
@@ -62,7 +62,7 @@ tell from the console which runs are marginal.
 
 | Port | Proto | What |
 |---|---|---|
-| 8080 | TCP | doxacast-server (API, console, photos) |
+| 8080 | TCP | doxaboard-server (API, console, photos) |
 | 8890 | UDP | SRT in from OBS / out to screens |
 | 1935 | TCP | RTMP in from OBS (alternative) |
 | 8554 | TCP | RTSP out |

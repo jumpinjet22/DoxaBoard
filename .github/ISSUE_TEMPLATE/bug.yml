@@ -40,13 +40,13 @@ body:
     id: logs
     attributes:
       label: Logs
-      description: "e.g. `journalctl -u doxacast-agent -n 100` or `docker compose logs server`. Remove tokens first."
+      description: "e.g. `journalctl -u doxaboard-agent -n 100` or `docker compose logs server`. Remove tokens first."
       render: text
   - type: input
     id: version
     attributes:
-      label: DoxaCast version
-      placeholder: "doxacast-agent -version"
+      label: DoxaBoard version
+      placeholder: "doxaboard-agent -version"
   - type: input
     id: hardware
     attributes:

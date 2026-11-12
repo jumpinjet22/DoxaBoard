@@ -1,4 +1,4 @@
-// Package server implements the DoxaCast control plane: device enrollment,
+// Package server implements the DoxaBoard control plane: device enrollment,
 // desired state, heartbeats, photo manifests and the admin API/console.
 package server
 
@@ -19,8 +19,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jumpinjet22/doxacast/core"
-	"github.com/jumpinjet22/doxacast/internal/content"
+	"github.com/jumpinjet22/doxaboard/core"
+	"github.com/jumpinjet22/doxaboard/internal/content"
 )
 
 //go:embed web

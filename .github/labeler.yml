@@ -1,13 +1,13 @@
 # PR labels by changed files (actions/labeler v5 format).
 connector:
   - changed-files:
-      - any-glob-to-any-file: ["connectors/**", "cmd/doxacast-connector/**", "community-connectors.yaml"]
+      - any-glob-to-any-file: ["connectors/**", "cmd/doxaboard-connector/**", "community-connectors.yaml"]
 server:
   - changed-files:
-      - any-glob-to-any-file: ["internal/server/**", "cmd/doxacast-server/**"]
+      - any-glob-to-any-file: ["internal/server/**", "cmd/doxaboard-server/**"]
 agent:
   - changed-files:
-      - any-glob-to-any-file: ["internal/agent/**", "cmd/doxacast-agent/**", "deploy/agent/**"]
+      - any-glob-to-any-file: ["internal/agent/**", "cmd/doxaboard-agent/**", "deploy/agent/**"]
 core:
   - changed-files:
       - any-glob-to-any-file: ["core/**", "slides/**"]

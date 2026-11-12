@@ -1,6 +1,6 @@
-# DoxaCast Roadmap
+# DoxaBoard Roadmap
 
-DoxaCast puts one live stream (and a photo fallback) on every screen in a
+DoxaBoard puts one live stream (and a photo fallback) on every screen in a
 building, and keeps each screen running on its own when anything upstream
 fails. This is the plan, in the order we intend to build it.
 
@@ -28,7 +28,7 @@ The goal is one OBS stream on a few Pis with automatic failover, and photos when
 - ✅ Runs on cached state when the server is unreachable (survives reboots)
 - ✅ Poll jitter, so a building full of screens doesn't stampede after a power cut
 
-**Server (`cmd/doxacast-server`):**
+**Server (`cmd/doxaboard-server`):**
 - ✅ SQLite store (pure Go, no cgo)
 - ✅ Device enrollment with a shared token → per-device credentials
 - ✅ Desired state endpoint with ETag/304
@@ -37,7 +37,7 @@ The goal is one OBS stream on a few Pis with automatic failover, and photos when
 - ✅ Photo manifests and files from the OneDrive-synced folder
 - ✅ Admin console: screens (status, now showing, profile, output) and profiles editor
 
-**Pi agent (`cmd/doxacast-agent`):**
+**Pi agent (`cmd/doxaboard-agent`):**
 - ✅ mpv playback (DRM, no desktop needed) for multicast, SRT, RTSP and HLS
 - ✅ Probes: multicast join + MPEG-TS check, ffprobe for SRT/RTSP, HLS playlist check
 - ✅ Photo slideshow with a local cache, so it keeps going offline
@@ -102,9 +102,9 @@ hands screens a manifest, so a CMS outage never blanks a TV.
 start/expire, order, duration). A profile's slideshow can merge several sources.
 
 **Foundation:**
-- ✅ Slide feed format `doxacast.slides/v1` with validation and a JSON Schema
+- ✅ Slide feed format `doxaboard.slides/v1` with validation and a JSON Schema
 - ✅ Connector registry, host-guarded HTTP client, conformance kit
-- ✅ `doxacast-connector` CLI: `check-feed`, `new` (scaffold), `lint`; Python sidecar example
+- ✅ `doxaboard-connector` CLI: `check-feed`, `new` (scaffold), `lint`; Python sidecar example
 - ✅ Contributor docs (docs/connectors.md), proposal and listing issue forms
 - ✅ Wire connectors into the server: Content tab with forms generated from
   connector fields, sources in profiles, server-side image processing and
@@ -120,7 +120,7 @@ start/expire, order, duration). A profile's slideshow can merge several sources.
 
 **First-class connectors:**
 - ⬜ Rock RMS: content channels (start/expire, order, image attribute),
-  calendar → upcoming events, service schedules → DoxaCast schedules;
+  calendar → upcoming events, service schedules → DoxaBoard schedules;
   read-only REST key, server-side only
 - ⬜ WordPress REST API (posts or a category, with featured images)
 - ⬜ Planning Center (Calendar events)

@@ -1,4 +1,4 @@
-// Package registry defines how content connectors plug into DoxaCast.
+// Package registry defines how content connectors plug into DoxaBoard.
 //
 // A connector turns some content system (Rock RMS, WordPress, an RSS feed, a
 // folder of photos) into slides. Connectors register themselves at init time:
@@ -7,7 +7,7 @@
 //
 // and are compiled into the server. Connectors in other languages don't use
 // this package at all: they run as a separate service that serves the slide
-// feed JSON, and DoxaCast reads it with the "jsonfeed" connector.
+// feed JSON, and DoxaBoard reads it with the "jsonfeed" connector.
 //
 // Connectors must do all network I/O through Deps.HTTP and all file I/O
 // through Deps.Files. CI enforces this with an import allowlist.
@@ -27,7 +27,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jumpinjet22/doxacast/slides"
+	"github.com/jumpinjet22/doxaboard/slides"
 )
 
 // Status tells admins how much to trust a connector.

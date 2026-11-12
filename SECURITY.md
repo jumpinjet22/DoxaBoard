@@ -1,6 +1,6 @@
 # Security Policy
 
-DoxaCast runs on church networks, puts content on screens people trust, and
+DoxaBoard runs on church networks, puts content on screens people trust, and
 holds API keys for systems that store people's data. We take security reports
 seriously and appreciate responsible disclosure.
 
@@ -10,7 +10,7 @@ seriously and appreciate responsible disclosure.
 
 Report privately through GitHub's private vulnerability reporting:
 
-**https://github.com/jumpinjet22/DoxaCast/security/advisories/new**
+**https://github.com/jumpinjet22/DoxaBoard/security/advisories/new**
 
 (or **Security → Report a vulnerability** on the repository page). Only the
 maintainers can see your report.
@@ -37,12 +37,12 @@ you. If we can't fix something within 90 days, we'll explain why and agree on
 a new date. Please don't disclose publicly before the advisory is published,
 or 90 days after your report, whichever comes first.
 
-We credit reporters in the advisory unless you'd rather we didn't. DoxaCast is
+We credit reporters in the advisory unless you'd rather we didn't. DoxaBoard is
 a volunteer project and doesn't run a paid bug bounty.
 
 ## Supported versions
 
-DoxaCast is pre-1.0. Only the latest release and `main` get security fixes.
+DoxaBoard is pre-1.0. Only the latest release and `main` get security fixes.
 
 ## Scope
 
@@ -54,7 +54,7 @@ config, install script) and our CI workflows.
 
 - community sidecar connectors: report those to their maintainers
 - third-party software we deploy (mediamtx, rclone, mpv, ffmpeg): report
-  those upstream, but tell us too if DoxaCast's configuration makes it worse
+  those upstream, but tell us too if DoxaBoard's configuration makes it worse
 - attacks that need an already-compromised admin token, server or screen
 - denial of service by flooding the network
 

@@ -12,7 +12,7 @@ func TestLintCatchesForbiddenImports(t *testing.T) {
 	src := "package bad\n\nimport (\n" +
 		"\t\"os/exec\"\n" +
 		"\t\"net\"\n" +
-		"\t\"github.com/jumpinjet22/doxacast/internal/server\"\n" +
+		"\t\"github.com/jumpinjet22/doxaboard/internal/server\"\n" +
 		"\t\"github.com/someone/somelib\"\n" +
 		"\t\"net/http\"\n" +
 		")\n"
@@ -29,7 +29,7 @@ func TestLintCatchesForbiddenImports(t *testing.T) {
 			got[f.Import] = f
 		}
 	}
-	for _, imp := range []string{"os/exec", "net", "github.com/jumpinjet22/doxacast/internal/server", "github.com/someone/somelib"} {
+	for _, imp := range []string{"os/exec", "net", "github.com/jumpinjet22/doxaboard/internal/server", "github.com/someone/somelib"} {
 		if _, ok := got[imp]; !ok {
 			t.Errorf("expected a finding for %s", imp)
 		}

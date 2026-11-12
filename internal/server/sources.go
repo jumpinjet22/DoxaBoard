@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jumpinjet22/doxacast/connectors/registry"
-	"github.com/jumpinjet22/doxacast/internal/content"
+	"github.com/jumpinjet22/doxaboard/connectors/registry"
+	"github.com/jumpinjet22/doxaboard/internal/content"
 )
 
 // slideshowManifestPath is where screens get their merged slideshow.

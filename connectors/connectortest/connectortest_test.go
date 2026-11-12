@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/jumpinjet22/doxacast/connectors/registry"
-	"github.com/jumpinjet22/doxacast/slides"
+	"github.com/jumpinjet22/doxaboard/connectors/registry"
+	"github.com/jumpinjet22/doxaboard/slides"
 )
 
 // demo is a minimal, well-behaved connector used to test the kit itself.
@@ -17,7 +17,7 @@ type demo struct{}
 func (demo) Info() registry.Info {
 	return registry.Info{
 		Name: "demo", Title: "Demo", Description: "Kit self-test", Status: registry.StatusExperimental,
-		Maintainer: "@doxacast",
+		Maintainer: "@doxaboard",
 		Fields:     []registry.Field{{Key: "base_url", Label: "Base URL", Type: registry.FieldURL, Required: true}},
 	}
 }

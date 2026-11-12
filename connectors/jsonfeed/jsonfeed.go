@@ -1,4 +1,4 @@
-// Package jsonfeed reads a URL that serves a doxacast.slides/v1 feed.
+// Package jsonfeed reads a URL that serves a doxaboard.slides/v1 feed.
 //
 // It is also how connectors written in other languages plug in: run them as
 // a small service that serves the feed JSON, and point a jsonfeed source at
@@ -15,8 +15,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/jumpinjet22/doxacast/connectors/registry"
-	"github.com/jumpinjet22/doxacast/slides"
+	"github.com/jumpinjet22/doxaboard/connectors/registry"
+	"github.com/jumpinjet22/doxaboard/slides"
 )
 
 func init() { registry.Register(Connector{}) }
@@ -29,13 +29,13 @@ func (Connector) Info() registry.Info {
 	return registry.Info{
 		Name:  "jsonfeed",
 		Title: "Slide feed (JSON)",
-		Description: "Reads a URL that serves a doxacast.slides/v1 JSON feed. " +
+		Description: "Reads a URL that serves a doxaboard.slides/v1 JSON feed. " +
 			"Use it for sidecar connectors written in any language.",
 		Status:     registry.StatusOfficial,
 		Maintainer: "@jumpinjet22",
 		Fields: []registry.Field{
 			{Key: "url", Label: "Feed URL", Type: registry.FieldURL, Required: true,
-				Help: "An http(s) URL that returns a doxacast.slides/v1 feed."},
+				Help: "An http(s) URL that returns a doxaboard.slides/v1 feed."},
 			{Key: "token", Label: "Bearer token", Type: registry.FieldSecret,
 				Help: `Optional. Sent as "Authorization: Bearer <token>".`},
 		},

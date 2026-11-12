@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jumpinjet22/doxacast/connectors/connectortest"
-	"github.com/jumpinjet22/doxacast/connectors/registry"
-	"github.com/jumpinjet22/doxacast/slides"
+	"github.com/jumpinjet22/doxaboard/connectors/connectortest"
+	"github.com/jumpinjet22/doxaboard/connectors/registry"
+	"github.com/jumpinjet22/doxaboard/slides"
 )
 
 //go:embed testdata
@@ -43,13 +43,13 @@ func TestConformance(t *testing.T) {
 		{
 			Name:    "empty_feed",
 			Config:  registry.Config{"url": "{{server}}/empty"},
-			Routes:  map[string]connectortest.Response{"/empty": {Body: []byte(`{"schema":"doxacast.slides/v1","slides":[]}`)}},
+			Routes:  map[string]connectortest.Response{"/empty": {Body: []byte(`{"schema":"doxaboard.slides/v1","slides":[]}`)}},
 			WantIDs: []string{},
 		},
 		{
 			Name:    "wrong_schema",
 			Config:  registry.Config{"url": "{{server}}/v2"},
-			Routes:  map[string]connectortest.Response{"/v2": {Body: []byte(`{"schema":"doxacast.slides/v2","slides":[]}`)}},
+			Routes:  map[string]connectortest.Response{"/v2": {Body: []byte(`{"schema":"doxaboard.slides/v2","slides":[]}`)}},
 			WantErr: true,
 		},
 	})
@@ -133,7 +133,7 @@ func TestNoTokenNoAuthHeader(t *testing.T) {
 	var sawAuth bool
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, sawAuth = r.Header["Authorization"]
-		w.Write([]byte(`{"schema":"doxacast.slides/v1","slides":[]}`))
+		w.Write([]byte(`{"schema":"doxaboard.slides/v1","slides":[]}`))
 	}))
 	defer srv.Close()
 	if _, err := newSource(t, srv, registry.Config{"url": srv.URL}, nil).Fetch(context.Background()); err != nil {
@@ -151,7 +151,7 @@ func TestFeedLevelErrors(t *testing.T) {
 		"html page":      `<!doctype html><html><body>Sign in</body></html>`,
 		"too many slides": func() string {
 			var b strings.Builder
-			b.WriteString(`{"schema":"doxacast.slides/v1","slides":[`)
+			b.WriteString(`{"schema":"doxaboard.slides/v1","slides":[`)
 			for i := range slides.MaxSlides + 1 {
 				if i > 0 {
 					b.WriteString(",")
@@ -190,7 +190,7 @@ func TestSchemaErrorMentionsProblem(t *testing.T) {
 
 func TestOversizedFeed(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"schema":"doxacast.slides/v1","slides":[],"pad":"`))
+		w.Write([]byte(`{"schema":"doxaboard.slides/v1","slides":[],"pad":"`))
 		w.Write([]byte(strings.Repeat("x", slides.MaxFeedBytes)))
 		w.Write([]byte(`"}`))
 	}))
@@ -202,7 +202,7 @@ func TestOversizedFeed(t *testing.T) {
 
 func TestImageResolution(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"schema":"doxacast.slides/v1","slides":[
+		w.Write([]byte(`{"schema":"doxaboard.slides/v1","slides":[
 			{"id":"rel","title":"Relative","image":{"url":"img/a.jpg"}},
 			{"id":"proto","title":"Protocol-relative","image":{"url":"//cdn.example.org/b.jpg"}},
 			{"id":"nohost-titled","title":"Kept without image","image":{"url":"http:c.jpg"}},
