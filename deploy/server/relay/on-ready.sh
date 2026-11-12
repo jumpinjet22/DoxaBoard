@@ -1,5 +1,5 @@
 #!/bin/sh
-# Started by mediamtx when the "live" path gets a publisher (OBS).
+# Started by mediamtx (runOnAvailable) when the "live" path gets a publisher (OBS).
 # Runs each output in its own restart loop; mediamtx kills us when OBS stops.
 set -u
 
