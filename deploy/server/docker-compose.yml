@@ -48,7 +48,7 @@ services:
 
   rclone:
     # Mirrors a OneDrive folder into ./photos. Each subfolder is an album.
-    image: rclone/rclone:1.68
+    image: rclone/rclone:1.76
     restart: unless-stopped
     entrypoint: ["/bin/sh", "-c"]
     command:
