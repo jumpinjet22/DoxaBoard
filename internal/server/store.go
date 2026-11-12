@@ -24,6 +24,7 @@ type Profile struct {
 	Name        string        `json:"name"`
 	Sources     []core.Source `json:"sources"`
 	Album       string        `json:"album"`
+	SourceIDs   []string      `json:"source_ids,omitempty"`
 	Interval    int           `json:"interval_seconds"`
 	Shuffle     bool          `json:"shuffle"`
 	PollSeconds int           `json:"poll_seconds"`
@@ -76,7 +77,7 @@ func OpenStore(path string) (*Store, error) {
 		return nil, err
 	}
 	db.SetMaxOpenConns(1) // SQLite: one writer; keeps things simple and safe
-	if _, err := db.ExecContext(context.Background(), schema); err != nil {
+	if _, err := db.ExecContext(context.Background(), schema+sourcesSchema); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("migrate: %w", err)
 	}

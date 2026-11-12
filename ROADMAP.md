@@ -106,8 +106,10 @@ start/expire, order, duration). A profile's slideshow can merge several sources.
 - ✅ Connector registry, host-guarded HTTP client, conformance kit
 - ✅ `doxacast-connector` CLI: `check-feed`, `new` (scaffold), `lint`; Python sidecar example
 - ✅ Contributor docs (docs/connectors.md), proposal and listing issue forms
-- ⬜ **Wire connectors into the server**: sources in profiles, server-side image cache
-  and resize, console form generated from connector fields
+- ✅ Wire connectors into the server: Content tab with forms generated from
+  connector fields, sources in profiles, server-side image processing and
+  text-slide rendering, last-good caching, secrets encrypted at rest
+- ⬜ Per-slide durations and tags/zones on screens
 - ⬜ Listing bot and nightly re-check for community sidecars
 
 **Universal sources (cover most CMSes with no custom code):**

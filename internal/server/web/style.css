@@ -85,3 +85,16 @@ fieldset { border: 1px solid var(--border); border-radius: 8px; margin: 12px 0; 
   .source-row { grid-template-columns: 1fr 70px 36px; }
   .source-row select { grid-column: 1 / -1; }
 }
+
+.status-line { font-size: 13px; color: var(--muted); }
+.status-line.bad { color: var(--bad); }
+.card .actions-inline { display: flex; gap: 6px; flex-wrap: wrap; }
+.card.stack { flex-direction: column; align-items: stretch; }
+.card-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top: 10px; }
+.thumbs figure { margin: 0; }
+.thumbs img { width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #000; border-radius: 4px; display: block; }
+.thumbs figcaption { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thumbs .inactive img { opacity: .4; }
+.field-help { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.check-list label { display: flex; align-items: center; gap: 8px; margin: 4px 0; }

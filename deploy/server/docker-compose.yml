@@ -27,8 +27,12 @@ services:
       DOXACAST_ENROLLMENT_TOKEN: ${DOXACAST_ENROLLMENT_TOKEN:?set in .env}
       DOXACAST_DB: /data/doxacast.db
       DOXACAST_PHOTO_DIR: /photos
+      # Encrypts connector API keys. Kept apart from ./data so a database
+      # backup alone doesn't include the key. Back it up separately.
+      DOXACAST_SECRET_KEY_FILE: /secrets/secret.key
     volumes:
       - ./data:/data
+      - ./secrets:/secrets
       - ./photos:/photos:ro
 
   relay:

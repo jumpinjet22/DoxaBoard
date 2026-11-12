@@ -5,13 +5,17 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
+	_ "github.com/jumpinjet22/doxacast/connectors/all" // register content connectors
+	"github.com/jumpinjet22/doxacast/internal/content"
 	"github.com/jumpinjet22/doxacast/internal/server"
 )
 
@@ -26,6 +30,8 @@ func main() {
 	addr := flag.String("addr", env("DOXACAST_ADDR", ":8080"), "listen address")
 	dbPath := flag.String("db", env("DOXACAST_DB", "doxacast.db"), "SQLite database path")
 	photoDir := flag.String("photos", env("DOXACAST_PHOTO_DIR", ""), "photo directory (one subfolder per album)")
+	dataDir := flag.String("data", env("DOXACAST_DATA_DIR", ""), "directory for the content cache and secret key (default: the database's directory)")
+	keyFile := flag.String("secret-key", env("DOXACAST_SECRET_KEY_FILE", ""), "file holding the key that encrypts connector secrets (created if missing; default: <data>/secret.key)")
 	debug := flag.Bool("debug", os.Getenv("DOXACAST_DEBUG") != "", "verbose logging")
 	flag.Parse()
 
@@ -52,14 +58,41 @@ func main() {
 	}
 	defer store.Close()
 
+	if *dataDir == "" {
+		*dataDir = filepath.Dir(*dbPath)
+	}
+	if *keyFile == "" {
+		*keyFile = filepath.Join(*dataDir, "secret.key")
+	}
+	key, err := content.LoadOrCreateKey(*keyFile)
+	if err != nil {
+		log.Error("loading secret key", "path", *keyFile, "err", err)
+		os.Exit(1)
+	}
+	cfg.Sealer, err = content.NewSealer(key)
+	if err != nil {
+		log.Error("secret key", "err", err)
+		os.Exit(1)
+	}
+	cfg.Content = &content.Manager{
+		Dir:   filepath.Join(*dataDir, "content"),
+		Style: content.DefaultTextStyle,
+		Logf:  func(f string, a ...any) { log.Info(fmt.Sprintf(f, a...)) },
+	}
+	if *photoDir != "" {
+		cfg.Content.Files = os.DirFS(*photoDir)
+	}
+
+	app := server.New(cfg, store, log)
 	srv := &http.Server{
 		Addr:              *addr,
-		Handler:           server.New(cfg, store, log).Handler(),
+		Handler:           app.Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	go app.RunContent(ctx)
 	go func() {
 		<-ctx.Done()
 		shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)

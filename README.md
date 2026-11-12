@@ -54,7 +54,7 @@ goes down, every screen keeps doing what it was last told, even across reboots.
 | Pi agent (mpv, probes, slideshow, watchdog) | ✅ Built, tested |
 | Relay stack (mediamtx, multicast, Vimeo push, rclone) | ✅ Built; config checked against mediamtx 1.21 |
 | OneDrive photo slideshow | ✅ Works through the server's photo albums |
-| Connectors: JSON feed, RSS/Atom, folder | ✅ Built and fuzz-tested; ⬜ **not yet selectable in the console** |
+| Content sources: RSS/Atom, JSON feed, folder | ✅ Add them in the console's **Content** tab; text-only posts become rendered slides |
 | Rock RMS, WordPress, Planning Center connectors | ⬜ Planned |
 | Running on real Pis and TVs | ⬜ **Not yet**: the next milestone |
 
@@ -72,7 +72,7 @@ You need a Linux box on the same network as the screens, with Docker.
 git clone https://github.com/jumpinjet22/DoxaCast
 cd DoxaCast/deploy/server
 cp .env.example .env            # set the two tokens: openssl rand -hex 24
-mkdir -p data photos && sudo chown 65532:65532 data
+mkdir -p data secrets photos && sudo chown 65532:65532 data secrets
 docker compose run --rm rclone config   # create a remote named "onedrive"
 docker compose up -d
 ```
