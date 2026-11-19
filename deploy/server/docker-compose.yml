@@ -51,7 +51,7 @@ services:
     # The -ffmpeg variant includes ffmpeg for the multicast fanout.
     # Pinned by tag AND digest: the tag is for humans, the digest is what
     # actually gets pulled. Dependabot updates both.
-    image: bluenviron/mediamtx:1.21.3-ffmpeg@sha256:208e9f1740a09a5ee63b6308e77ce0d54fce0456462f640e6bd9acfc62ebb5a2
+    image: bluenviron/mediamtx:1.21.4-ffmpeg@sha256:1fa0abbefb6f181bf0da075c65a75505ee43bb9996e4a4b5fd30a4ab7dea01e6
     restart: unless-stopped
     network_mode: host
     environment:
