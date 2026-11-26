@@ -4,7 +4,7 @@ go 1.26.11
 
 require (
 	golang.org/x/image v0.48.0
-	modernc.org/sqlite v1.62.0
+	modernc.org/sqlite v1.63.0
 )
 
 require (
